@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
+    /* Modal styles */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -42,29 +43,23 @@
       width:36px;height:36px;border-radius:6px;
       display:flex;align-items:center;justify-content:center;cursor:pointer;
     }
-    .check-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:8px; }
-    .check-box { border:1px solid #e6e9ef; padding:10px; border-radius:6px; display:flex; align-items:center; gap:8px; min-height:50px; }
-    .icon { width:32px; height:32px; border-radius:6px; background:#f3f4f6; display:flex;align-items:center;justify-content:center; font-size:16px; color:#374151; }
+
+    .check-grid {
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:8px;
+      margin-bottom:8px;
+    }
     .check-text { font-size:14px; color:#111827; }
-    .check-label { font-size:12px; color:#6b7280; margin-bottom:4px; }
 
     .calendar-widget { background:transparent; padding:0; box-shadow:none; }
     .cal-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
     .cal-title { font-weight:600; font-size:16px; }
-    .cal-controls { display:flex; gap:6px; align-items:center; }
     .cal-controls button { background:#f3f4f6; border:1px solid #e6e9ef; padding:4px 8px; border-radius:6px; cursor:pointer; font-size:14px; }
-    .weekday-row { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:4px; }
-    .weekday { text-align:center; font-size:12px; color:#6b7280; padding:4px 0; }
+
+    .weekday-row { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:4px; text-align:center; font-size:12px; color:#6b7280; }
     .days-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
-    .day { min-height:40px; padding:6px; border-radius:6px; background:transparent; display:flex; flex-direction:column; cursor:pointer; border:none; text-align:left; }
-    .day.other-month { opacity:0.34; }
-    .date-num { font-weight:600; font-size:14px; color:#0f172a; }
-    .day.today { box-shadow: inset 0 0 0 2px rgba(37,99,235,0.12); }
-    .day.range { background: rgba(59,130,246,0.10); }
-    .day.range.start { background: linear-gradient(90deg, rgba(59,130,246,0.12), rgba(59,130,246,0.06)); }
-    .day.range.end { background: linear-gradient(90deg, rgba(59,130,246,0.06), rgba(59,130,246,0.12)); }
-    .day.selected { background: rgba(59,130,246,0.18); border-radius:8px; }
-    .day:disabled { opacity:0.35; cursor:not-allowed; }
+    .days-grid button { min-height:40px; padding:6px; border-radius:6px; background:transparent; cursor:pointer; border:none; }
 
     .modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
     .btn { padding:6px 12px; border-radius:6px; border:1px solid #0b5fff; background:#0b5fff;color:#fff; cursor:pointer; }
@@ -88,6 +83,8 @@
 
 <main class="content">
   <h2>Book Your Stay</h2>
+  <p>We’d love to welcome you to Seaside Escape! Please fill out the form below to send your booking inquiry.</p>
+
   <form action="https://formspree.io/f/mexample" method="POST" id="bookingForm">
     <label for="name">Full Name</label>
     <input type="text" id="name" name="name" required>
@@ -111,47 +108,35 @@
   <p>&copy; 2025 Seaside Escape | Email: info@seasideescape.com</p>
 </footer>
 
-<div class="modal-overlay" id="dateModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-  <div class="modal" role="document">
+<!-- Modal -->
+<div class="modal-overlay" id="dateModal">
+  <div class="modal">
     <div class="modal-header">
-      <div>
-        <div id="modalTitle" class="modal-title">Select Dates</div>
-        <div style="color:#6b7280;font-size:13px;margin-top:2px">Choose your check-in and checkout dates</div>
-      </div>
-      <button class="modal-close" id="closeModal" aria-label="Close date picker">✕</button>
+      <div class="modal-title">Select Dates</div>
+      <button class="modal-close" id="closeModal">✕</button>
     </div>
 
-    <div class="check-grid" id="checkSummary">
-      <div>
-        <div class="check-label">Check-In</div>
-        <div class="check-box"><div class="icon">📅</div><div><div class="check-text" id="checkinText">—</div></div></div>
-      </div>
-      <div>
-        <div class="check-label">Check-Out</div>
-        <div class="check-box"><div class="icon">📅</div><div><div class="check-text" id="checkoutText">—</div></div></div>
-      </div>
+    <div class="check-grid">
+      <div>Check-in: <span id="checkinText">—</span></div>
+      <div>Check-out: <span id="checkoutText">—</span></div>
     </div>
 
     <div class="calendar-widget">
       <div class="cal-top">
-        <div class="cal-title" id="modalMonthTitle">Month Year</div>
-        <div class="cal-controls">
-          <button id="modalPrev">◀</button>
-          <button id="modalToday">Today</button>
-          <button id="modalNext">▶</button>
-        </div>
+        <button id="prevMonth">◀</button>
+        <span id="monthTitle"></span>
+        <button id="nextMonth">▶</button>
       </div>
       <div class="weekday-row">
-        <div class="weekday">Sun</div><div class="weekday">Mon</div><div class="weekday">Tue</div>
-        <div class="weekday">Wed</div><div class="weekday">Thu</div><div class="weekday">Fri</div>
-        <div class="weekday">Sat</div>
+        <div>Sun</div><div>Mon</div><div>Tue</div>
+        <div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
       </div>
-      <div class="days-grid" id="modalDaysGrid"></div>
+      <div class="days-grid" id="daysGrid"></div>
     </div>
 
     <div class="modal-actions">
-      <button class="btn ghost" id="cancelBtn" type="button">Cancel</button>
-      <button class="btn" id="applyBtn" type="button">Apply dates</button>
+      <button class="btn ghost" id="cancelBtn">Cancel</button>
+      <button class="btn" id="applyBtn">Apply</button>
     </div>
   </div>
 </div>
@@ -160,86 +145,33 @@
 (function(){
   const datesInput = document.getElementById('dates');
   const dateModal = document.getElementById('dateModal');
-  const closeModal = document.getElementById('closeModal');
+  const closeModalBtn = document.getElementById('closeModal');
   const cancelBtn = document.getElementById('cancelBtn');
   const applyBtn = document.getElementById('applyBtn');
-  const modalMonthTitle = document.getElementById('modalMonthTitle');
-  const modalDaysGrid = document.getElementById('modalDaysGrid');
-  const modalPrev = document.getElementById('modalPrev');
-  const modalNext = document.getElementById('modalNext');
-  const modalToday = document.getElementById('modalToday');
   const checkinText = document.getElementById('checkinText');
   const checkoutText = document.getElementById('checkoutText');
+  const monthTitle = document.getElementById('monthTitle');
+  const daysGrid = document.getElementById('daysGrid');
   const checkinHidden = document.getElementById('checkin');
   const checkoutHidden = document.getElementById('checkout');
 
   let viewDate = new Date(); viewDate.setDate(1);
-  let startDate=null,endDate=null;
-  const todayBase = new Date(); todayBase.setHours(0,0,0,0);
+  let startDate = null, endDate = null;
 
-  function pad(n){return n<10?'0'+n:''+n;}
-  function isSameDay(a,b){return a&&b&&a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
-  function formatFriendly(a,b){
-    if(!a) return '';
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  function pad(n){ return n<10?'0'+n:n; }
+  function formatDate(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  function formatFriendly(d1,d2){
+    if(!d1) return '';
     const months=["January","February","March","April","May","June","July","August","September","October","November","December"];
-    if(!b||isSameDay(a,b)) return months[a.getMonth()]+' '+a.getDate()+', '+a.getFullYear();
-    let s=a,e=b;if(s>e)[s,e]=[e,s];
-    if(s.getFullYear()===e.getFullYear()){
-      if(s.getMonth()===e.getMonth()) return months[s.getMonth()]+' '+s.getDate()+'–'+e.getDate()+', '+s.getFullYear();
-      return months[s.getMonth()]+' '+s.getDate()+' – '+months[e.getMonth()]+' '+e.getDate()+', '+s.getFullYear();
-    }
-    return months[s.getMonth()]+' '+s.getDate()+', '+s.getFullYear()+' – '+months[e.getMonth()]+' '+e.getDate()+', '+e.getFullYear();
+    if(!d2 || d1.getTime()===d2.getTime()) return months[d1.getMonth()]+' '+d1.getDate()+', '+d1.getFullYear();
+    return months[d1.getMonth()]+' '+d1.getDate()+' – '+months[d2.getMonth()]+' '+d2.getDate();
   }
 
-  function updateSummary(){ checkinText.textContent=startDate?formatFriendly(startDate,null):'—'; checkoutText.textContent=endDate?formatFriendly(endDate,null):'—'; }
-
-  function openModal(){ dateModal.classList.add('open'); dateModal.setAttribute('aria-hidden','false'); document.documentElement.style.overflow='hidden'; closeModal.focus(); renderModal(); }
+  function openModal(){ dateModal.style.display='flex'; renderCalendar(); }
   function closeModalFn(commit=false){
-    dateModal.classList.remove('open'); dateModal.setAttribute('aria-hidden','true'); document.documentElement.style.overflow='';
-    if(commit && startDate){ datesInput.value=formatFriendly(startDate,endDate||startDate); checkinHidden.value=startDate.getFullYear()+'-'+pad(startDate.getMonth()+1)+'-'+pad(startDate.getDate()); checkoutHidden.value=endDate?endDate.getFullYear()+'-'+pad(endDate.getMonth()+1)+'-'+pad(endDate.getDate()):''; }
-    datesInput.focus();
-  }
-
-  datesInput.addEventListener('click',openModal);
-  datesInput.addEventListener('focus',openModal);
-  closeModal.addEventListener('click',()=>closeModalFn(false));
-  cancelBtn.addEventListener('click',()=>closeModalFn(false));
-  applyBtn.addEventListener('click',()=>closeModalFn(true));
-  dateModal.addEventListener('click',e=>{if(e.target===dateModal) closeModalFn(false);});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&dateModal.classList.contains('open')) closeModalFn(false);});
-  datesInput.addEventListener('dblclick',()=>{ startDate=endDate=null; datesInput.value=''; checkinHidden.value=''; checkoutHidden.value=''; updateSummary(); });
-
-  function renderModal(){
-    modalMonthTitle.textContent=viewDate.toLocaleString(undefined,{month:'long',year:'numeric'});
-    modalDaysGrid.innerHTML='';
-    const year=viewDate.getFullYear(),month=viewDate.getMonth();
-    const first=new Date(year,month,1),startWeek=first.getDay();
-    const lastOfMonth=new Date(year,month+1,0).getDate();
-    const prevLast=new Date(year,month,0).getDate();
-    for(let i=0;i<42;i++){
-      const btn=document.createElement('button'); btn.type='button'; btn.className='day';
-      const dayIndex=i-startWeek+1; let cellDate;
-      if(dayIndex<=0) {cellDate=new Date(year,month-1,prevLast+dayIndex); btn.classList.add('other-month');}
-      else if(dayIndex>lastOfMonth) {cellDate=new Date(year,month+1,dayIndex-lastOfMonth); btn.classList.add('other-month');}
-      else {cellDate=new Date(year,month,dayIndex);}
-      const dn=document.createElement('div'); dn.className='date-num'; dn.textContent=cellDate.getDate(); btn.appendChild(dn);
-      const norm=new Date(cellDate.getFullYear(),cellDate.getMonth(),cellDate.getDate()); if(norm<todayBase) btn.disabled=true;
-      if(isSameDay(cellDate,todayBase)) btn.classList.add('today');
-      if(startDate&&endDate){ let s=startDate,e=endDate;if(s>e)[s,e]=[e,s]; if(cellDate>=s&&cellDate<=e){btn.classList.add('range');if(isSameDay(cellDate,s))btn.classList.add('start'); if(isSameDay(cellDate,e))btn.classList.add('end');} if(isSameDay(cellDate,startDate)||isSameDay(cellDate,endDate))btn.classList.add('selected'); }
-      else if(startDate&&isSameDay(cellDate,startDate)) btn.classList.add('selected');
-      btn.addEventListener('mouseenter',()=>{ if(btn.disabled)return; if(startDate&&!endDate){ checkinText.textContent=formatFriendly(startDate,null); checkoutText.textContent=formatFriendly(startDate,cellDate);} else if(!startDate){ checkinText.textContent=formatFriendly(cellDate,null); checkoutText.textContent='—';} else { checkinText.textContent=formatFriendly(startDate,null); checkoutText.textContent=endDate?formatFriendly(endDate,null):'—'; }});
-      btn.addEventListener('mouseleave',updateSummary);
-      btn.addEventListener('click',()=>{ if(btn.disabled)return; if(!startDate||(startDate&&endDate)){startDate=new Date(cellDate); endDate=null;} else if(!endDate){endDate=new Date(cellDate);} updateSummary(); renderModal();});
-      modalDaysGrid.appendChild(btn);
-    }
-  }
-
-  modalPrev.addEventListener('click',()=>{ viewDate.setMonth(viewDate.getMonth()-1); renderModal(); });
-  modalNext.addEventListener('click',()=>{ viewDate.setMonth(viewDate.getMonth()+1); renderModal(); });
-  modalToday.addEventListener('click',()=>{ viewDate=new Date(); viewDate.setDate(1); renderModal(); });
-
-  updateSummary();
-})();
-</script>
-</body>
-</html>
+    dateModal.style.display='none';
+    if(commit && startDate){
+      datesInput.value = formatFriendly(startDate,endDate||startDate);
+      checkinHidden.value = startDate ? format
