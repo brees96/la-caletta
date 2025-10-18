@@ -41,6 +41,23 @@
     .days-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
     .day { width:100%; padding:8px; border:none; cursor:pointer; border-radius:6px; text-align:center; }
 
+    /* Greyed, non-interactive states */
+    .day.is-disabled,
+    .day.other-month {
+      color: #9ca3af;
+      background: #f3f4f6;
+      cursor: not-allowed;
+      opacity: 0.9;
+    }
+    .day.is-disabled:hover,
+    .day.other-month:hover {
+      background: #f3f4f6;
+    }
+
+    /* Keep selected/range styles readable */
+    .day.selected,
+    .day.range { color: #0f172a; }
+
     .modal-actions { display:flex; justify-content:flex-end; gap:8px; }
     .btn { padding:6px 12px; border-radius:6px; border:none; background:#0b5fff; color:#fff; cursor:pointer; }
     .btn.ghost { background:transparent;color:#0b5fff;border:1px solid #dbeafe; }
@@ -139,7 +156,10 @@ document.addEventListener('DOMContentLoaded', function(){
 
   let viewDate = new Date(); viewDate.setDate(1);
   let startDate = null, endDate = null;
-  const today = new Date(); today.setHours(0,0,0,0);
+
+  // Normalize "today" to midnight for clean comparisons
+  const today = new Date();
+  today.setHours(0,0,0,0);
 
   function pad(n){return n<10?'0'+n:n;}
   function formatDate(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
@@ -172,24 +192,63 @@ document.addEventListener('DOMContentLoaded', function(){
     const lastDate = new Date(year,month+1,0).getDate();
     const prevLast = new Date(year,month,0).getDate();
 
-    for(let i=0;i<42;i++){
-      const btn = document.createElement('button'); btn.type='button'; btn.className='day';
-      let dayNum = i - startWeek + 1;
-      let cellDate;
-      if(dayNum <=0){ cellDate = new Date(year,month-1,prevLast+dayNum); btn.classList.add('other-month'); }
-      else if(dayNum>lastDate){ cellDate = new Date(year,month+1,dayNum-lastDate); btn.classList.add('other-month'); }
-      else{ cellDate = new Date(year,month,dayNum); }
+    for (let i = 0; i < 42; i++) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'day';
+
+      const dayNum = i - startWeek + 1;
+      let cellDate, isOtherMonth = false;
+
+      if (dayNum <= 0) {
+        cellDate = new Date(year, month - 1, prevLast + dayNum);
+        isOtherMonth = true;
+      } else if (dayNum > lastDate) {
+        cellDate = new Date(year, month + 1, dayNum - lastDate);
+        isOtherMonth = true;
+      } else {
+        cellDate = new Date(year, month, dayNum);
+      }
+
       btn.textContent = cellDate.getDate();
-      if(cellDate < today) btn.disabled = true;
 
-      if(startDate && endDate && cellDate>=startDate && cellDate<=endDate) btn.style.background='rgba(59,130,246,0.2)';
-      if(startDate && cellDate.getTime()===startDate.getTime() || endDate && cellDate.getTime()===endDate.getTime()) btn.style.background='rgba(37,99,235,0.4)';
+      // Normalize cell date for comparison
+      const normalizedCell = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
+      const isPast = normalizedCell < today;
 
-      btn.addEventListener('click',()=>{
-        if(!startDate || (startDate && endDate)){ startDate = new Date(cellDate); endDate=null; }
-        else if(!endDate){ endDate = new Date(cellDate); }
-        checkinText.textContent = startDate ? formatFriendly(startDate,null) : '—';
-        checkoutText.textContent = endDate ? formatFriendly(endDate,null) : '—';
+      if (isOtherMonth) btn.classList.add('other-month');
+
+      // Disable past dates and other-month spillover
+      if (isPast || isOtherMonth) {
+        btn.classList.add('is-disabled');
+        btn.disabled = true;
+        btn.setAttribute('aria-disabled', 'true');
+      }
+
+      // Selected/range visuals (only for enabled buttons)
+      if (!btn.disabled) {
+        if (startDate && endDate && normalizedCell >= new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
+            && normalizedCell <= new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())) {
+          btn.classList.add('range');
+          btn.style.background = 'rgba(59,130,246,0.2)';
+        }
+        if ((startDate && normalizedCell.getTime() === new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()).getTime()) ||
+            (endDate && normalizedCell.getTime() === new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate()).getTime())) {
+          btn.classList.add('selected');
+          btn.style.background = 'rgba(37,99,235,0.4)';
+        }
+      }
+
+      btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        if (!startDate || (startDate && endDate)) {
+          startDate = new Date(normalizedCell);
+          endDate = null;
+        } else if (!endDate) {
+          endDate = new Date(normalizedCell);
+        }
+        checkinText.textContent = startDate ? formatFriendly(startDate, null) : '—';
+        checkoutText.textContent = endDate ? formatFriendly(endDate, null) : '—';
         renderCalendar();
       });
 
@@ -207,3 +266,5 @@ document.addEventListener('DOMContentLoaded', function(){
   nextMonthBtn.addEventListener('click',()=>{ viewDate.setMonth(viewDate.getMonth()+1); renderCalendar(); });
 });
 </script>
+</body>
+</html>
