@@ -9,7 +9,7 @@
   <!-- Inline calendar styles (kept minimal to avoid clashing with your external CSS) -->
   <style>
     /* Calendar container */
-    .calendar-widget { max-width:880px; margin:18px auto 28px; background:#fff; border-radius:10px; padding:12px; box-shadow:0 6px 18px rgba(20,30,50,0.06); }
+    .calendar-widget { max-width:880px; margin:12px 0 28px 0; background:#fff; border-radius:10px; padding:12px; box-shadow:0 6px 18px rgba(20,30,50,0.06); }
     .cal-top { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px; }
     .cal-title { font-weight:600; font-size:1rem; }
     .cal-controls { display:flex; gap:8px; align-items:center; }
@@ -17,9 +17,9 @@
     .weekday-row { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:6px; }
     .weekday { text-align:center; font-size:12px; color:#6b7280; padding:6px 0; }
     .days-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
-    .day { min-height:68px; padding:8px; border-radius:8px; background:transparent; display:flex; flex-direction:column; cursor:pointer; user-select:none; }
+    .day { min-height:68px; padding:8px; border-radius:8px; background:transparent; display:flex; flex-direction:column; cursor:pointer; user-select:none; border: none; }
     .day.other-month { opacity:0.34; }
-    .day .date-num { font-weight:600; font-size:14px; }
+    .day .date-num { font-weight:600; font-size:14px; text-align:left; }
     .day.today { box-shadow:inset 0 0 0 2px rgba(37,99,235,0.12); }
     .day.range { background: rgba(59,130,246,0.10); }
     .day.range.start { background: linear-gradient(90deg, rgba(59,130,246,0.12), rgba(59,130,246,0.06)); box-shadow: 0 2px 0 rgba(59,130,246,0.12) inset; }
@@ -28,6 +28,14 @@
     .small-note { font-size:13px; color:#374151; margin-bottom:8px; }
     .cal-legend { display:flex; gap:10px; align-items:center; color:#6b7280; font-size:13px; margin-top:8px; }
     .legend-dot { width:10px; height:10px; border-radius:50%; background:rgba(59,130,246,0.9); display:inline-block; margin-right:6px; }
+
+    /* Preview text under the input */
+    .date-preview { font-size:13px; color:#374151; margin-top:6px; min-height:20px; }
+    .date-preview .muted { color:#6b7280; font-style:italic; }
+
+    /* Keep buttons accessible */
+    .day:focus { outline: 2px solid rgba(37,99,235,0.24); outline-offset: 2px; }
+
     @media (max-width:680px){
       .day { min-height:58px; padding:6px; }
       .cal-top { gap:8px; flex-direction:column; align-items:flex-start; }
@@ -59,45 +67,48 @@
       <input type="email" id="email" name="_replyto" required>
 
       <label for="dates">Preferred Dates</label>
+      <!-- readonly input; user uses calendar below to pick -->
       <input type="text" id="dates" name="dates" placeholder="e.g. June 12–18, 2025" required readonly>
+
+      <!-- Live preview shown under the input; updates on hover and selection -->
+      <div class="date-preview" id="datePreview"><span class="muted">Hover over dates in the calendar to preview — click to select.</span></div>
+
+      <!-- Calendar widget placed directly under the Preferred Dates field -->
+      <div class="calendar-widget" id="calendarWidget" aria-label="Booking calendar">
+        <div class="cal-top">
+          <div>
+            <div class="cal-title" id="monthTitle">Month Year</div>
+            <div class="small-note">Click a start date then an end date to select a range. Click again to reset selection.</div>
+          </div>
+          <div class="cal-controls" role="toolbar" aria-label="Calendar controls">
+            <button id="prevMonth" aria-label="Previous month">◀</button>
+            <button id="todayBtn" aria-label="Go to current month">Today</button>
+            <button id="nextMonth" aria-label="Next month">▶</button>
+          </div>
+        </div>
+
+        <div class="weekday-row" aria-hidden="true">
+          <div class="weekday">Sun</div>
+          <div class="weekday">Mon</div>
+          <div class="weekday">Tue</div>
+          <div class="weekday">Wed</div>
+          <div class="weekday">Thu</div>
+          <div class="weekday">Fri</div>
+          <div class="weekday">Sat</div>
+        </div>
+
+        <div class="days-grid" id="daysGrid" role="grid"></div>
+
+        <div class="cal-legend" aria-hidden="true">
+          <span><span class="legend-dot" aria-hidden="true"></span> Selected range</span>
+        </div>
+      </div>
 
       <label for="message">Message</label>
       <textarea id="message" name="message" rows="5" required></textarea>
 
       <button type="submit" class="btn">Send Request</button>
     </form>
-
-    <!-- Calendar widget (users can pick check-in/out which fills the "dates" input) -->
-    <div class="calendar-widget" id="calendarWidget" aria-label="Booking calendar">
-      <div class="cal-top">
-        <div>
-          <div class="cal-title" id="monthTitle">Month Year</div>
-          <div class="small-note">Click a start date then an end date to select a range. Click again to reset selection.</div>
-        </div>
-        <div class="cal-controls" role="toolbar" aria-label="Calendar controls">
-          <button id="prevMonth" aria-label="Previous month">◀</button>
-          <button id="todayBtn" aria-label="Go to current month">Today</button>
-          <button id="nextMonth" aria-label="Next month">▶</button>
-        </div>
-      </div>
-
-      <div class="weekday-row" aria-hidden="true">
-        <div class="weekday">Sun</div>
-        <div class="weekday">Mon</div>
-        <div class="weekday">Tue</div>
-        <div class="weekday">Wed</div>
-        <div class="weekday">Thu</div>
-        <div class="weekday">Fri</div>
-        <div class="weekday">Sat</div>
-      </div>
-
-      <div class="days-grid" id="daysGrid" role="grid"></div>
-
-      <div class="cal-legend" aria-hidden="true">
-        <span><span class="legend-dot" aria-hidden="true"></span> Selected range</span>
-      </div>
-    </div>
-
   </main>
 
   <footer>
@@ -113,6 +124,7 @@
       const nextMonthBtn = document.getElementById('nextMonth');
       const todayBtn = document.getElementById('todayBtn');
       const datesInput = document.getElementById('dates');
+      const datePreview = document.getElementById('datePreview');
 
       // View date = currently displayed month (first day)
       let viewDate = new Date();
@@ -122,13 +134,15 @@
       let startDate = null;
       let endDate = null;
 
+      // Hover preview state
+      let hoveredDate = null;
+
       // Utility helpers
       function pad(n) { return n < 10 ? '0' + n : '' + n; }
       function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
       function isSameDay(a, b) { return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
 
       function formatFriendlyRange(a, b) {
-        // If only start or both null
         if (!a) return '';
         const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
@@ -222,6 +236,29 @@
             cell.setAttribute('aria-pressed', 'true');
           }
 
+          // hover behavior: show preview in preview element while not changing actual input value
+          cell.addEventListener('mouseenter', () => {
+            hoveredDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
+            // If there's a start selected and no end yet, preview start->hover
+            if (startDate && !endDate) {
+              datePreview.textContent = formatFriendlyRange(startDate, hoveredDate);
+            } else if (!startDate) {
+              datePreview.textContent = formatFriendlyRange(hoveredDate, null);
+            } else if (startDate && endDate) {
+              // if both set, show start->hover preview (helpful when editing), but you could also show hovered single
+              datePreview.textContent = formatFriendlyRange(startDate, hoveredDate);
+            }
+          });
+          cell.addEventListener('mouseleave', () => {
+            hoveredDate = null;
+            // revert preview to actual selection or muted hint
+            if (startDate) {
+              datePreview.textContent = formatFriendlyRange(startDate, endDate || startDate);
+            } else {
+              datePreview.innerHTML = '<span class="muted">Hover over dates in the calendar to preview — click to select.</span>';
+            }
+          });
+
           // click handler to choose start/end
           cell.addEventListener('click', () => {
             if (!startDate || (startDate && endDate)) {
@@ -231,16 +268,12 @@
             } else if (!endDate) {
               // set end selection
               endDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
-              // if user clicked same day, keep as a single-day booking (both set)
-              if (isSameDay(startDate, endDate)) {
-                // keep both as same -> treated as single day
-              }
+              // if user clicked same day, keep as a single-day booking
             }
-            // If user clicks earlier date as end, still works (we treat range properly on render)
-            // If user clicked again on a selected start while no end, reset selection
-            render();
-            // update input when we have at least a start (or start+end)
+            // update visible input to reflect confirmed selection
             datesInput.value = formatFriendlyRange(startDate, endDate || startDate);
+            datePreview.textContent = datesInput.value || '<span class="muted">Hover over dates in the calendar to preview — click to select.</span>';
+            render();
           });
 
           // keyboard accessibility: Enter/Space to click
@@ -270,9 +303,8 @@
         render();
       });
 
-      // clicking the dates input focuses calendar to current month
+      // clicking the dates input focuses calendar to current month and scrolls into view
       datesInput.addEventListener('focus', () => {
-        // show current month containing startDate if set, else today
         if (startDate) {
           viewDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
         } else {
@@ -280,7 +312,6 @@
           viewDate.setDate(1);
         }
         render();
-        // optionally scroll into view (helpful on small screens)
         document.getElementById('calendarWidget').scrollIntoView({ behavior: 'smooth', block: 'center' });
       });
 
@@ -288,8 +319,12 @@
       datesInput.addEventListener('dblclick', () => {
         startDate = endDate = null;
         datesInput.value = '';
+        datePreview.innerHTML = '<span class="muted">Hover over dates in the calendar to preview — click to select.</span>';
         render();
       });
+
+      // initial preview hint
+      datePreview.innerHTML = '<span class="muted">Hover over dates in the calendar to preview — click to select.</span>';
 
       // initial render
       render();
