@@ -1,10 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Book Your Stay | Seaside Escape</title>
   <link rel="stylesheet" href="style.css">
+
+  <!-- Inline calendar styles (kept minimal to avoid clashing with your external CSS) -->
+  <style>
+    /* Calendar container */
+    .calendar-widget { max-width:880px; margin:18px auto 28px; background:#fff; border-radius:10px; padding:12px; box-shadow:0 6px 18px rgba(20,30,50,0.06); }
+    .cal-top { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px; }
+    .cal-title { font-weight:600; font-size:1rem; }
+    .cal-controls { display:flex; gap:8px; align-items:center; }
+    .cal-controls button { background:#f3f4f6; border:1px solid #e6e9ef; padding:6px 10px; border-radius:8px; cursor:pointer; }
+    .weekday-row { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:6px; }
+    .weekday { text-align:center; font-size:12px; color:#6b7280; padding:6px 0; }
+    .days-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+    .day { min-height:68px; padding:8px; border-radius:8px; background:transparent; display:flex; flex-direction:column; cursor:pointer; user-select:none; }
+    .day.other-month { opacity:0.34; }
+    .day .date-num { font-weight:600; font-size:14px; }
+    .day.today { box-shadow:inset 0 0 0 2px rgba(37,99,235,0.12); }
+    .day.range { background: rgba(59,130,246,0.10); }
+    .day.range.start { background: linear-gradient(90deg, rgba(59,130,246,0.12), rgba(59,130,246,0.06)); box-shadow: 0 2px 0 rgba(59,130,246,0.12) inset; }
+    .day.range.end { background: linear-gradient(90deg, rgba(59,130,246,0.06), rgba(59,130,246,0.12)); box-shadow: 0 2px 0 rgba(59,130,246,0.12) inset; }
+    .day.selected { background: rgba(59,130,246,0.18); border-radius:10px; }
+    .small-note { font-size:13px; color:#374151; margin-bottom:8px; }
+    .cal-legend { display:flex; gap:10px; align-items:center; color:#6b7280; font-size:13px; margin-top:8px; }
+    .legend-dot { width:10px; height:10px; border-radius:50%; background:rgba(59,130,246,0.9); display:inline-block; margin-right:6px; }
+    @media (max-width:680px){
+      .day { min-height:58px; padding:6px; }
+      .cal-top { gap:8px; flex-direction:column; align-items:flex-start; }
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -23,7 +51,7 @@
     <h2>Book Your Stay</h2>
     <p>We’d love to welcome you to Seaside Escape! Please fill out the form below to send your booking inquiry.</p>
 
-    <form action="https://formspree.io/f/mexample" method="POST">
+    <form action="https://formspree.io/f/mexample" method="POST" id="bookingForm">
       <label for="name">Full Name</label>
       <input type="text" id="name" name="name" required>
 
@@ -31,17 +59,241 @@
       <input type="email" id="email" name="_replyto" required>
 
       <label for="dates">Preferred Dates</label>
-      <input type="text" id="dates" name="dates" placeholder="e.g. June 12–18, 2025" required>
+      <input type="text" id="dates" name="dates" placeholder="e.g. June 12–18, 2025" required readonly>
 
       <label for="message">Message</label>
       <textarea id="message" name="message" rows="5" required></textarea>
 
       <button type="submit" class="btn">Send Request</button>
     </form>
+
+    <!-- Calendar widget (users can pick check-in/out which fills the "dates" input) -->
+    <div class="calendar-widget" id="calendarWidget" aria-label="Booking calendar">
+      <div class="cal-top">
+        <div>
+          <div class="cal-title" id="monthTitle">Month Year</div>
+          <div class="small-note">Click a start date then an end date to select a range. Click again to reset selection.</div>
+        </div>
+        <div class="cal-controls" role="toolbar" aria-label="Calendar controls">
+          <button id="prevMonth" aria-label="Previous month">◀</button>
+          <button id="todayBtn" aria-label="Go to current month">Today</button>
+          <button id="nextMonth" aria-label="Next month">▶</button>
+        </div>
+      </div>
+
+      <div class="weekday-row" aria-hidden="true">
+        <div class="weekday">Sun</div>
+        <div class="weekday">Mon</div>
+        <div class="weekday">Tue</div>
+        <div class="weekday">Wed</div>
+        <div class="weekday">Thu</div>
+        <div class="weekday">Fri</div>
+        <div class="weekday">Sat</div>
+      </div>
+
+      <div class="days-grid" id="daysGrid" role="grid"></div>
+
+      <div class="cal-legend" aria-hidden="true">
+        <span><span class="legend-dot" aria-hidden="true"></span> Selected range</span>
+      </div>
+    </div>
+
   </main>
 
   <footer>
     <p>&copy; 2025 Seaside Escape | Email: info@seasideescape.com</p>
   </footer>
+
+  <!-- Calendar behavior script -->
+  <script>
+    (function () {
+      const daysGrid = document.getElementById('daysGrid');
+      const monthTitle = document.getElementById('monthTitle');
+      const prevMonthBtn = document.getElementById('prevMonth');
+      const nextMonthBtn = document.getElementById('nextMonth');
+      const todayBtn = document.getElementById('todayBtn');
+      const datesInput = document.getElementById('dates');
+
+      // View date = currently displayed month (first day)
+      let viewDate = new Date();
+      viewDate.setDate(1);
+
+      // Selection state
+      let startDate = null;
+      let endDate = null;
+
+      // Utility helpers
+      function pad(n) { return n < 10 ? '0' + n : '' + n; }
+      function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+      function isSameDay(a, b) { return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+
+      function formatFriendlyRange(a, b) {
+        // If only start or both null
+        if (!a) return '';
+        const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+        if (!b || isSameDay(a, b)) {
+          return months[a.getMonth()] + ' ' + a.getDate() + ', ' + a.getFullYear();
+        }
+
+        // ensure a <= b
+        let s = a, e = b;
+        if (s > e) [s, e] = [e, s];
+
+        if (s.getFullYear() === e.getFullYear()) {
+          if (s.getMonth() === e.getMonth()) {
+            // Same month & year: "June 12–18, 2025"
+            return months[s.getMonth()] + ' ' + s.getDate() + '–' + e.getDate() + ', ' + s.getFullYear();
+          } else {
+            // Same year, different month: "June 28 – July 3, 2025"
+            return months[s.getMonth()] + ' ' + s.getDate() + ' – ' + months[e.getMonth()] + ' ' + e.getDate() + ', ' + s.getFullYear();
+          }
+        } else {
+          // Different years: "Dec 30, 2025 – Jan 3, 2026"
+          return months[s.getMonth()] + ' ' + s.getDate() + ', ' + s.getFullYear() + ' – ' + months[e.getMonth()] + ' ' + e.getDate() + ', ' + e.getFullYear();
+        }
+      }
+
+      // Render calendar month view (6 weeks / 42 cells)
+      function render() {
+        daysGrid.innerHTML = '';
+        const year = viewDate.getFullYear();
+        const month = viewDate.getMonth();
+        const firstDayOfMonth = new Date(year, month, 1);
+        const startWeekday = firstDayOfMonth.getDay(); // 0=Sun
+        const lastOfMonth = new Date(year, month + 1, 0).getDate();
+        const prevMonthLastDay = new Date(year, month, 0).getDate();
+
+        monthTitle.textContent = viewDate.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+
+        const totalCells = 42;
+        for (let i = 0; i < totalCells; i++) {
+          const cell = document.createElement('button');
+          cell.className = 'day';
+          cell.type = 'button';
+          cell.setAttribute('role', 'gridcell');
+          cell.setAttribute('aria-pressed', 'false');
+
+          // calculate date to show
+          const dayIndex = i - startWeekday + 1;
+          let cellDate;
+          if (dayIndex <= 0) {
+            // prev month
+            cellDate = new Date(year, month - 1, prevMonthLastDay + dayIndex);
+            cell.classList.add('other-month');
+          } else if (dayIndex > lastOfMonth) {
+            // next month
+            cellDate = new Date(year, month + 1, dayIndex - lastOfMonth);
+            cell.classList.add('other-month');
+          } else {
+            // this month
+            cellDate = new Date(year, month, dayIndex);
+          }
+
+          // date number
+          const dateNum = document.createElement('div');
+          dateNum.className = 'date-num';
+          dateNum.textContent = cellDate.getDate();
+          cell.appendChild(dateNum);
+
+          // mark today
+          const today = new Date();
+          if (isSameDay(cellDate, today)) {
+            cell.classList.add('today');
+            cell.setAttribute('aria-current', 'date');
+          }
+
+          // selection highlighting
+          if (startDate && endDate) {
+            // handle either order
+            let s = startDate, e = endDate;
+            if (s > e) [s, e] = [e, s];
+            if (cellDate >= s && cellDate <= e) {
+              cell.classList.add('range');
+              if (isSameDay(cellDate, s)) cell.classList.add('start');
+              if (isSameDay(cellDate, e)) cell.classList.add('end');
+            }
+            if (isSameDay(cellDate, startDate) || isSameDay(cellDate, endDate)) {
+              cell.classList.add('selected');
+              cell.setAttribute('aria-pressed', 'true');
+            }
+          } else if (startDate && isSameDay(cellDate, startDate)) {
+            cell.classList.add('selected');
+            cell.setAttribute('aria-pressed', 'true');
+          }
+
+          // click handler to choose start/end
+          cell.addEventListener('click', () => {
+            if (!startDate || (startDate && endDate)) {
+              // start new selection
+              startDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
+              endDate = null;
+            } else if (!endDate) {
+              // set end selection
+              endDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
+              // if user clicked same day, keep as a single-day booking (both set)
+              if (isSameDay(startDate, endDate)) {
+                // keep both as same -> treated as single day
+              }
+            }
+            // If user clicks earlier date as end, still works (we treat range properly on render)
+            // If user clicked again on a selected start while no end, reset selection
+            render();
+            // update input when we have at least a start (or start+end)
+            datesInput.value = formatFriendlyRange(startDate, endDate || startDate);
+          });
+
+          // keyboard accessibility: Enter/Space to click
+          cell.addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter' || ev.key === ' ') {
+              ev.preventDefault();
+              cell.click();
+            }
+          });
+
+          daysGrid.appendChild(cell);
+        }
+      }
+
+      // controls
+      prevMonthBtn.addEventListener('click', () => {
+        viewDate.setMonth(viewDate.getMonth() - 1);
+        render();
+      });
+      nextMonthBtn.addEventListener('click', () => {
+        viewDate.setMonth(viewDate.getMonth() + 1);
+        render();
+      });
+      todayBtn.addEventListener('click', () => {
+        viewDate = new Date();
+        viewDate.setDate(1);
+        render();
+      });
+
+      // clicking the dates input focuses calendar to current month
+      datesInput.addEventListener('focus', () => {
+        // show current month containing startDate if set, else today
+        if (startDate) {
+          viewDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+        } else {
+          viewDate = new Date();
+          viewDate.setDate(1);
+        }
+        render();
+        // optionally scroll into view (helpful on small screens)
+        document.getElementById('calendarWidget').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+
+      // Allow clearing selection by double-click on input
+      datesInput.addEventListener('dblclick', () => {
+        startDate = endDate = null;
+        datesInput.value = '';
+        render();
+      });
+
+      // initial render
+      render();
+    })();
+  </script>
 </body>
 </html>
