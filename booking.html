@@ -216,125 +216,132 @@
         }
       }
 
-      // Render calendar month view (6 weeks / 42 cells)
-      function render() {
-        daysGrid.innerHTML = '';
-        const year = viewDate.getFullYear();
-        const month = viewDate.getMonth();
-        const firstDayOfMonth = new Date(year, month, 1);
-        const startWeekday = firstDayOfMonth.getDay(); // 0=Sun
-        const lastOfMonth = new Date(year, month + 1, 0).getDate();
-        const prevMonthLastDay = new Date(year, month, 0).getDate();
+// Render calendar month view (6 weeks / 42 cells)
+function render() {
+  daysGrid.innerHTML = '';
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const firstDayOfMonth = new Date(year, month, 1);
+  const startWeekday = firstDayOfMonth.getDay(); // 0=Sun
+  const lastOfMonth = new Date(year, month + 1, 0).getDate();
+  const prevMonthLastDay = new Date(year, month, 0).getDate();
 
-        monthTitle.textContent = viewDate.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+  monthTitle.textContent = viewDate.toLocaleString(undefined, { month: 'long', year: 'numeric' });
 
-        const totalCells = 42;
-        for (let i = 0; i < totalCells; i++) {
-          const cell = document.createElement('button');
-          cell.className = 'day';
-          cell.type = 'button';
-          cell.setAttribute('role', 'gridcell');
-          cell.setAttribute('aria-pressed', 'false');
+  // normalise today's date for comparisons (midnight)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-          // calculate date to show
-          const dayIndex = i - startWeekday + 1;
-          let cellDate;
-          if (dayIndex <= 0) {
-            // prev month
-            cellDate = new Date(year, month - 1, prevMonthLastDay + dayIndex);
-            cell.classList.add('other-month');
-          } else if (dayIndex > lastOfMonth) {
-            // next month
-            cellDate = new Date(year, month + 1, dayIndex - lastOfMonth);
-            cell.classList.add('other-month');
-          } else {
-            // this month
-            cellDate = new Date(year, month, dayIndex);
-          }
+  const totalCells = 42;
+  for (let i = 0; i < totalCells; i++) {
+    const cell = document.createElement('button');
+    cell.className = 'day';
+    cell.type = 'button';
+    cell.setAttribute('role', 'gridcell');
+    cell.setAttribute('aria-pressed', 'false');
 
-          // date number
-          const dateNum = document.createElement('div');
-          dateNum.className = 'date-num';
-          dateNum.textContent = cellDate.getDate();
-          cell.appendChild(dateNum);
+    // calculate date to show
+    const dayIndex = i - startWeekday + 1;
+    let cellDate;
+    if (dayIndex <= 0) {
+      // prev month
+      cellDate = new Date(year, month - 1, prevMonthLastDay + dayIndex);
+      cell.classList.add('other-month');
+    } else if (dayIndex > lastOfMonth) {
+      // next month
+      cellDate = new Date(year, month + 1, dayIndex - lastOfMonth);
+      cell.classList.add('other-month');
+    } else {
+      // this month
+      cellDate = new Date(year, month, dayIndex);
+    }
 
-          // mark today
-          const today = new Date();
-          if (isSameDay(cellDate, today)) {
-            cell.classList.add('today');
-            cell.setAttribute('aria-current', 'date');
-          }
+    // date number
+    const dateNum = document.createElement('div');
+    dateNum.className = 'date-num';
+    dateNum.textContent = cellDate.getDate();
+    cell.appendChild(dateNum);
 
-          // selection highlighting
-          if (startDate && endDate) {
-            // handle either order
-            let s = startDate, e = endDate;
-            if (s > e) [s, e] = [e, s];
-            if (cellDate >= s && cellDate <= e) {
-              cell.classList.add('range');
-              if (isSameDay(cellDate, s)) cell.classList.add('start');
-              if (isSameDay(cellDate, e)) cell.classList.add('end');
-            }
-            if (isSameDay(cellDate, startDate) || isSameDay(cellDate, endDate)) {
-              cell.classList.add('selected');
-              cell.setAttribute('aria-pressed', 'true');
-            }
-          } else if (startDate && isSameDay(cellDate, startDate)) {
-            cell.classList.add('selected');
-            cell.setAttribute('aria-pressed', 'true');
-          }
+    // mark today
+    if (isSameDay(cellDate, today)) {
+      cell.classList.add('today');
+      cell.setAttribute('aria-current', 'date');
+    }
 
-          // hover behavior: show preview in preview element while not changing actual input value
-          cell.addEventListener('mouseenter', () => {
-            hoveredDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
-            // If there's a start selected and no end yet, preview start->hover
-            if (startDate && !endDate) {
-              datePreview.textContent = formatFriendlyRange(startDate, hoveredDate);
-            } else if (!startDate) {
-              datePreview.textContent = formatFriendlyRange(hoveredDate, null);
-            } else if (startDate && endDate) {
-              // if both set, show start->hover preview (helpful when editing), but you could also show hovered single
-              datePreview.textContent = formatFriendlyRange(startDate, hoveredDate);
-            }
-          });
-          cell.addEventListener('mouseleave', () => {
-            hoveredDate = null;
-            // revert preview to actual selection or muted hint
-            if (startDate) {
-              datePreview.textContent = formatFriendlyRange(startDate, endDate || startDate);
-            } else {
-              datePreview.innerHTML = '<span class="muted">Hover over dates in the calendar to preview — click to select.</span>';
-            }
-          });
+    // ✅ Disable past dates (strictly before today)
+    const cellDateNormalized = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
+    if (cellDateNormalized < today) {
+      cell.disabled = true;
+      cell.style.opacity = '0.35';
+      cell.style.cursor = 'not-allowed';
+    }
 
-          // click handler to choose start/end
-          cell.addEventListener('click', () => {
-            if (!startDate || (startDate && endDate)) {
-              // start new selection
-              startDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
-              endDate = null;
-            } else if (!endDate) {
-              // set end selection
-              endDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
-              // if user clicked same day, keep as a single-day booking
-            }
-            // update visible input to reflect confirmed selection
-            datesInput.value = formatFriendlyRange(startDate, endDate || startDate);
-            datePreview.textContent = datesInput.value || '<span class="muted">Hover over dates in the calendar to preview — click to select.</span>';
-            render();
-          });
-
-          // keyboard accessibility: Enter/Space to click
-          cell.addEventListener('keydown', (ev) => {
-            if (ev.key === 'Enter' || ev.key === ' ') {
-              ev.preventDefault();
-              cell.click();
-            }
-          });
-
-          daysGrid.appendChild(cell);
-        }
+    // selection highlighting
+    if (startDate && endDate) {
+      let s = startDate, e = endDate;
+      if (s > e) [s, e] = [e, s];
+      if (cellDate >= s && cellDate <= e) {
+        cell.classList.add('range');
+        if (isSameDay(cellDate, s)) cell.classList.add('start');
+        if (isSameDay(cellDate, e)) cell.classList.add('end');
       }
+      if (isSameDay(cellDate, startDate) || isSameDay(cellDate, endDate)) {
+        cell.classList.add('selected');
+        cell.setAttribute('aria-pressed', 'true');
+      }
+    } else if (startDate && isSameDay(cellDate, startDate)) {
+      cell.classList.add('selected');
+      cell.setAttribute('aria-pressed', 'true');
+    }
+
+    // hover preview (skip past dates)
+    cell.addEventListener('mouseenter', () => {
+      if (cell.disabled) return;
+      hoveredDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
+      if (startDate && !endDate) {
+        datePreview.textContent = formatFriendlyRange(startDate, hoveredDate);
+      } else if (!startDate) {
+        datePreview.textContent = formatFriendlyRange(hoveredDate, null);
+      } else if (startDate && endDate) {
+        datePreview.textContent = formatFriendlyRange(startDate, hoveredDate);
+      }
+    });
+    cell.addEventListener('mouseleave', () => {
+      if (cell.disabled) return;
+      hoveredDate = null;
+      if (startDate) {
+        datePreview.textContent = formatFriendlyRange(startDate, endDate || startDate);
+      } else {
+        datePreview.innerHTML = '<span class="muted">Hover over dates in the calendar to preview — click to select.</span>';
+      }
+    });
+
+    // click handler
+    cell.addEventListener('click', () => {
+      if (cell.disabled) return;
+      if (!startDate || (startDate && endDate)) {
+        startDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
+        endDate = null;
+      } else if (!endDate) {
+        endDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
+      }
+      datesInput.value = formatFriendlyRange(startDate, endDate || startDate);
+      datePreview.textContent = datesInput.value || '<span class="muted">Hover over dates in the calendar to preview — click to select.</span>';
+      render();
+    });
+
+    // keyboard accessibility: Enter/Space to click (disabled buttons won't fire click)
+    cell.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        if (!cell.disabled) cell.click();
+      }
+    });
+
+    daysGrid.appendChild(cell);
+  }
+}
+
 
       // controls
       prevMonthBtn.addEventListener('click', () => {
