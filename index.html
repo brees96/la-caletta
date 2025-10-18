@@ -1,42 +1,381 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to Sa Dommo e Mare</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Sa Dommo e Mare — Your Perfect Getaway</title>
+  <meta name="description" content="Relax, unwind, and enjoy a traditional experience at Sa Dommo e Mare — steps from the beach." />
+  <link rel="preconnect" href="https://images.unsplash.com">
+  <style>
+    :root{
+      --bg:#0b1220;
+      --bg-soft:#0f1730;
+      --card:#121a35;
+      --text:#eaf0ff;
+      --muted:#a8b3cf;
+      --brand:#58a6ff;
+      --brand-2:#22d3ee;
+      --ring: 0 8px 40px rgba(88,166,255,.15);
+      --radius: 16px;
+    }
+    /* Reset / base */
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:linear-gradient(180deg,var(--bg) 0%, #0b1220 50%, #0a1020 100%);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;scroll-behavior:smooth}
+    img{max-width:100%;display:block}
+    a{color:inherit;text-decoration:none}
+    .container{width:min(1100px,100%);margin-inline:auto;padding-inline:20px}
+    .btn{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--brand),var(--brand-2));border:none;color:#081023;padding:12px 18px;border-radius:12px;font-weight:700;cursor:pointer;box-shadow:var(--ring);transition:.25s transform}
+    .btn:hover{transform:translateY(-2px)}
+    .btn.ghost{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.15)}
+    .pill{padding:6px 10px;border-radius:999px;background:rgba(88,166,255,.15);font-size:12px;color:#cfe2ff;border:1px solid rgba(88,166,255,.25)}
+    .fade-up{opacity:0;transform:translateY(18px);transition:opacity .6s ease, transform .6s ease}
+    .fade-up.show{opacity:1;transform:none}
+
+    /* Header */
+    header.site{
+      position:sticky;top:0;z-index:50;
+      backdrop-filter:saturate(180%) blur(10px);
+      background:linear-gradient(180deg,rgba(10,16,32,.85),rgba(10,16,32,.35));
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .nav{
+      display:flex;align-items:center;justify-content:space-between;height:64px;
+    }
+    .brand{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:.3px}
+    .brand .logo{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--brand),var(--brand-2));box-shadow:0 0 0 3px rgba(34,211,238,.25) inset}
+    nav ul{display:flex;gap:18px;list-style:none;margin:0;padding:0}
+    nav a{padding:8px 10px;border-radius:10px;color:var(--muted)}
+    nav a:hover, nav a.active{background:rgba(255,255,255,.06);color:var(--text)}
+    .nav-actions{display:flex;gap:10px}
+    .burger{display:none;background:transparent;border:1px solid rgba(255,255,255,.15);border-radius:10px;color:var(--text);padding:8px 10px}
+    @media (max-width:900px){
+      nav ul{display:none;position:absolute;top:64px;right:16px;background:var(--bg-soft);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);width:min(260px,calc(100% - 32px));box-shadow:var(--ring)}
+      nav ul.open{display:flex;flex-direction:column}
+      .burger{display:inline-flex}
+      .nav-actions .btn{display:none}
+    }
+
+    /* Hero */
+    .hero{
+      position:relative;isolation:isolate;min-height:72vh;display:grid;place-items:center;overflow:hidden
+    }
+    .hero::before{
+      content:"";position:absolute;inset:-20%;z-index:-2;
+      background:url('https://images.unsplash.com/photo-1519822472371-98d3a8f63a36?q=80&w=2000&auto=format&fit=crop') center/cover no-repeat;
+      filter:saturate(1.2) brightness(.85);
+      transform:scale(1.05);
+    }
+    .hero::after{
+      content:"";position:absolute;inset:0;z-index:-1;
+      background:radial-gradient(1000px 500px at 20% 10%, rgba(34,211,238,.25), transparent 60%),
+                 radial-gradient(1000px 500px at 80% 90%, rgba(88,166,255,.18), transparent 60%),
+                 linear-gradient(180deg, rgba(10,16,32,.75) 0%, rgba(10,16,32,.85) 40%, rgba(10,16,32,.9) 100%);
+    }
+    .hero-wrap{padding-block:72px;text-align:center}
+    .hero h1{font-size:clamp(32px,7vw,56px);line-height:1.05;margin:10px 0}
+    .hero p{color:#cbd5f6;max-width:720px;margin:10px auto 18px}
+    .hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:28px}
+    .stat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 10px}
+    .stat strong{display:block;font-size:20px}
+    @media (max-width:700px){ .stats{grid-template-columns:repeat(2,1fr)} }
+
+    /* Features */
+    section{padding-block:64px}
+    .section-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+    .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .card{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);padding:18px;box-shadow:var(--ring)}
+    .card h3{margin:4px 0 6px}
+    .card p{color:var(--muted)}
+    .icon{
+      width:44px;height:44px;border-radius:12px;display:grid;place-items:center;
+      background:linear-gradient(135deg,rgba(88,166,255,.25),rgba(34,211,238,.2));
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:inset 0 0 0 2px rgba(255,255,255,.06)
+    }
+    @media (max-width:900px){ .feature-grid{grid-template-columns:1fr} }
+
+    /* Gallery */
+    .gallery{display:grid;grid-template-columns:repeat(12,1fr);gap:10px}
+    .g-item{grid-column:span 4;position:relative;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,.08);cursor:pointer}
+    .g-item:nth-child(3n){grid-column:span 8}
+    .g-item img{width:100%;height:100%;object-fit:cover;aspect-ratio:4/3;transition:transform .4s ease}
+    .g-item:hover img{transform:scale(1.04)}
+    @media (max-width:900px){ .gallery{grid-template-columns:repeat(6,1fr)} .g-item{grid-column:span 6} }
+
+    /* Lightbox */
+    .lightbox{position:fixed;inset:0;background:rgba(5,10,20,.8);display:none;align-items:center;justify-content:center;z-index:60}
+    .lightbox.open{display:flex}
+    .lightbox img{max-width:min(92vw,1100px);max-height:86vh;border-radius:16px;box-shadow:var(--ring)}
+    .lightbox button{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:var(--text);padding:8px 10px;border-radius:10px;cursor:pointer}
+
+    /* Testimonials slider */
+    .slider{position:relative}
+    .slides{display:flex;overflow:hidden;scroll-behavior:smooth;border-radius:16px;border:1px solid rgba(255,255,255,.08)}
+    .slide{min-width:100%;background:var(--card);padding:22px}
+    .slide p{color:#cbd5f6}
+    .slider .dots{display:flex;gap:8px;justify-content:center;margin-top:10px}
+    .dot{width:8px;height:8px;border-radius:50%;background:#3b4054;border:1px solid rgba(255,255,255,.18);cursor:pointer}
+    .dot.active{background:linear-gradient(135deg,var(--brand),var(--brand-2))}
+    .slider .nav-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:var(--text);padding:8px 10px;border-radius:10px;cursor:pointer}
+    .slider .prev{left:8px}.slider .next{right:8px}
+
+    /* FAQ */
+    .faq{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    details{background:var(--card);border-radius:14px;border:1px solid rgba(255,255,255,.08);padding:14px}
+    details p{color:var(--muted);margin-top:8px}
+    @media (max-width:900px){ .faq{grid-template-columns:1fr} }
+
+    /* CTA */
+    .cta{
+      background:radial-gradient(900px 300px at 20% 10%, rgba(34,211,238,.2), transparent 60%),
+                 radial-gradient(900px 300px at 80% 90%, rgba(88,166,255,.18), transparent 60%),
+                 linear-gradient(180deg,#0e1734,#0f1838);
+      border:1px solid rgba(255,255,255,.08);
+      padding:28px;border-radius:20px;box-shadow:var(--ring)
+    }
+    .cta h3{margin:0 0 6px}
+    .cta p{color:#cbd5f6;margin:0 0 12px}
+
+    /* Footer */
+    footer{padding:32px 0;border-top:1px solid rgba(255,255,255,.08);color:var(--muted);text-align:center}
+  </style>
 </head>
 <body>
-  <header>
-    <h1>Sa Dommo e Mare</h1>
-    <nav>
-      <ul>
-        <li><a href="index.html" class="active">Home</a></li>
-        <li><a href="about.html">About</a></li>
-        <li><a href="gallery.html">Gallery</a></li>
-        <li><a href="booking.html">Book Now</a></li>
-      </ul>
-    </nav>
+
+  <!-- Header -->
+  <header class="site">
+    <div class="container nav">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <span>Sa Dommo e Mare</span>
+      </div>
+      <nav aria-label="Main">
+        <button class="burger" aria-expanded="false" aria-controls="menu">☰ Menu</button>
+        <ul id="menu">
+          <li><a href="#home" class="active">Home</a></li>
+          <li><a href="#features">Highlights</a></li>
+          <li><a href="#gallery">Gallery</a></li>
+          <li><a href="#testimonials">Reviews</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+      </nav>
+      <div class="nav-actions">
+        <a href="booking.html" class="btn">Book Now</a>
+      </div>
+    </div>
   </header>
 
-  <section class="hero">
-    <div class="hero-text">
-      <h2>Your Perfect Getaway</h2>
-      <p>Relax, unwind, and enjoy a traditional experience at Sa Dommo e Mare.</p>
-      <a href="booking.html" class="btn">Book Your Stay</a>
+  <!-- Hero -->
+  <section id="home" class="hero">
+    <div class="container hero-wrap fade-up">
+      <span class="pill">Traditional seaside stay in Sardinia</span>
+      <h1>Your Perfect Getaway</h1>
+      <p>Relax, unwind, and enjoy a traditional experience at Sa Dommo e Mare — just steps from the beach. Perfect for families, couples, or solo travelers seeking peace and sunshine.</p>
+      <div class="hero-cta">
+        <a href="booking.html" class="btn">Check Availability</a>
+        <a href="#gallery" class="btn ghost">See Photos</a>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><strong>3 min</strong><span class="muted">Walk to beach</span></div>
+        <div class="stat"><strong>2–6</strong><span class="muted">Guests</span></div>
+        <div class="stat"><strong>5★</strong><span class="muted">Guest rating</span></div>
+        <div class="stat"><strong>Wi-Fi • A/C</strong><span class="muted">Modern comforts</span></div>
+      </div>
     </div>
   </section>
 
-  <section class="intro">
-    <h2>Welcome</h2>
-    <p>
-      Discover tranquility and comfort at our charming seaside rental — just steps away from the beach. 
-      Perfect for families, couples, or solo travelers seeking peace and sunshine.
-    </p>
+  <!-- Features -->
+  <section id="features" class="container">
+    <div class="section-head">
+      <h2>Why Guests Love Us</h2>
+      <span class="pill">Handpicked amenities</span>
+    </div>
+    <div class="feature-grid">
+      <article class="card fade-up">
+        <div class="icon">🏖️</div>
+        <h3>Steps from the Sea</h3>
+        <p>Wake up to salty breezes and wander to the shoreline in minutes. Beach days have never been easier.</p>
+      </article>
+      <article class="card fade-up" style="transition-delay:.08s">
+        <div class="icon">🏡</div>
+        <h3>Traditional Charm</h3>
+        <p>Experience rustic warmth with tasteful modern touches — all the character, none of the compromise.</p>
+      </article>
+      <article class="card fade-up" style="transition-delay:.16s">
+        <div class="icon">🌞</div>
+        <h3>Sun-Soaked Terrace</h3>
+        <p>Enjoy breakfast al fresco and golden-hour aperitivo on your private outdoor space.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- Gallery -->
+  <section id="gallery" class="container">
+    <div class="section-head">
+      <h2>Gallery</h2>
+      <span class="pill">Peek inside</span>
+    </div>
+    <div class="gallery">
+      <!-- Replace src with your own images -->
+      <div class="g-item fade-up"><img loading="lazy" src="https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=1200&auto=format&fit=crop" alt="Cozy living room with sunlight"/></div>
+      <div class="g-item fade-up" style="transition-delay:.05s"><img loading="lazy" src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1200&auto=format&fit=crop" alt="Bedroom with soft linens"/></div>
+      <div class="g-item fade-up" style="transition-delay:.1s"><img loading="lazy" src="https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=1600&auto=format&fit=crop" alt="Sunlit terrace with plants"/></div>
+      <div class="g-item fade-up"><img loading="lazy" src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop" alt="Kitchen detail"/></div>
+      <div class="g-item fade-up" style="transition-delay:.05s"><img loading="lazy" src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?q=80&w=1200&auto=format&fit=crop" alt="Bathroom detail"/></div>
+      <div class="g-item fade-up" style="transition-delay:.1s"><img loading="lazy" src="https://images.unsplash.com/photo-1482192596544-9eb780fc7f66?q=80&w=1600&auto=format&fit=crop" alt="Sea view"/></div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section id="testimonials" class="container">
+    <div class="section-head">
+      <h2>Guest Reviews</h2>
+      <span class="pill">Real stays, real smiles</span>
+    </div>
+    <div class="slider fade-up">
+      <button class="nav-btn prev" aria-label="Previous review">◀</button>
+      <div class="slides" id="slides">
+        <article class="slide">
+          <h3>“A dream by the sea”</h3>
+          <p>We loved every minute — the terrace mornings, the quick beach walks, and the warm Sardinian touches. Host was wonderful!</p>
+          <p><strong>— Sofia, Milan</strong></p>
+        </article>
+        <article class="slide">
+          <h3>“Perfect for our family”</h3>
+          <p>Clean, comfortable, and close to everything. Kids adored the beach and we adored the evenings on the balcony.</p>
+          <p><strong>— Liam, London</strong></p>
+        </article>
+        <article class="slide">
+          <h3>“Peaceful & authentic”</h3>
+          <p>A quiet corner of sunshine. Traditional style with modern comforts. We’ll be back next summer.</p>
+          <p><strong>— Marta, Barcelona</strong></p>
+        </article>
+      </div>
+      <button class="nav-btn next" aria-label="Next review">▶</button>
+      <div class="dots" id="dots" aria-label="Slide indicators"></div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="container">
+    <div class="section-head">
+      <h2>Good to Know</h2>
+      <span class="pill">FAQ</span>
+    </div>
+    <div class="faq fade-up">
+      <details>
+        <summary>How far is the beach?</summary>
+        <p>Just a few minutes’ stroll — you can be on the sand almost as soon as you step outside.</p>
+      </details>
+      <details>
+        <summary>Do you have Wi-Fi and A/C?</summary>
+        <p>Yes! High-speed Wi-Fi and air conditioning are available throughout the property.</p>
+      </details>
+      <details>
+        <summary>Is parking available?</summary>
+        <p>Free street parking is typically available nearby. We’ll share the best spots and tips before arrival.</p>
+      </details>
+      <details>
+        <summary>What’s the check-in/out time?</summary>
+        <p>Check-in from 15:00; check-out by 10:00. We’ll do our best to accommodate early/late requests.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="container">
+    <div class="cta fade-up">
+      <h3>Ready for the coast?</h3>
+      <p>Plan your seaside escape today — Sa Dommo e Mare is waiting.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <a class="btn" href="booking.html">Book Your Stay</a>
+        <a class="btn ghost" href="#gallery">View Full Gallery</a>
+      </div>
+    </div>
   </section>
 
   <footer>
-    <p>&copy; 2025 Sa Dommo e Mare | Email: roberto.cannas@hotmail.it</p>
+    <div class="container">
+      &copy; 2025 Sa Dommo e Mare &nbsp;•&nbsp; <a href="mailto:roberto.cannas@hotmail.it">roberto.cannas@hotmail.it</a>
+    </div>
   </footer>
+
+  <!-- Lightbox + Interactions -->
+  <div class="lightbox" id="lightbox" aria-hidden="true" role="dialog" aria-modal="true">
+    <button aria-label="Close">✕</button>
+    <img alt="Expanded gallery image" />
+  </div>
+
+  <script>
+    // Mobile menu
+    const burger = document.querySelector('.burger');
+    const menu = document.getElementById('menu');
+    burger?.addEventListener('click', () => {
+      const open = menu.classList.toggle('open');
+      burger.setAttribute('aria-expanded', String(open));
+    });
+
+    // Reveal on scroll
+    const io = new IntersectionObserver((ents)=>{
+      ents.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('show'); io.unobserve(e.target); } });
+    },{threshold:.15});
+    document.querySelectorAll('.fade-up').forEach(el=>io.observe(el));
+
+    // Gallery lightbox
+    const lb = document.getElementById('lightbox');
+    const lbImg = lb.querySelector('img');
+    document.querySelectorAll('.g-item img').forEach(img=>{
+      img.addEventListener('click',()=>{
+        lb.classList.add('open');
+        lb.setAttribute('aria-hidden','false');
+        lbImg.src = img.src;
+        lbImg.alt = img.alt || 'Gallery image';
+      });
+    });
+    lb.addEventListener('click',(e)=>{
+      if(e.target === lb || e.target.tagName === 'BUTTON'){
+        lb.classList.remove('open');
+        lb.setAttribute('aria-hidden','true');
+      }
+    });
+    document.addEventListener('keydown',(e)=>{
+      if(e.key==='Escape' && lb.classList.contains('open')){
+        lb.classList.remove('open'); lb.setAttribute('aria-hidden','true');
+      }
+    });
+
+    // Testimonials slider
+    const slides = document.getElementById('slides');
+    const dotsWrap = document.getElementById('dots');
+    const total = slides.children.length;
+    let current = 0;
+
+    function renderDots(){
+      dotsWrap.innerHTML = '';
+      for(let i=0;i<total;i++){
+        const d = document.createElement('button');
+        d.className = 'dot' + (i===current ? ' active' : '');
+        d.setAttribute('aria-label','Go to slide ' + (i+1));
+        d.addEventListener('click',()=>go(i));
+        dotsWrap.appendChild(d);
+      }
+    }
+    function go(i){
+      current = (i+total)%total;
+      slides.scrollTo({left: slides.clientWidth*current, behavior:'smooth'});
+      renderDots();
+    }
+    document.querySelector('.slider .prev').addEventListener('click',()=>go(current-1));
+    document.querySelector('.slider .next').addEventListener('click',()=>go(current+1));
+    window.addEventListener('resize',()=>go(current));
+    renderDots();
+
+    // Auto-advance slider (pause on hover)
+    let auto = setInterval(()=>go(current+1), 5000);
+    slides.addEventListener('mouseenter',()=>clearInterval(auto));
+    slides.addEventListener('mouseleave',()=>auto = setInterval(()=>go(current+1), 5000));
+  </script>
 </body>
 </html>
