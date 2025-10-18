@@ -7,65 +7,46 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
-    /* Modal styles */
+    /* --- modal styles --- */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(12, 14, 20, 0.6);
+      background: rgba(12,14,20,0.6);
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 1000;
       padding: 24px;
     }
-    .modal-overlay.open { display: flex; }
+    .modal-overlay.open, .modal-overlay[style*="display: flex"] { display: flex; }
 
     .modal {
       width: 400px;
-      max-width: 95%;
+      max-width: calc(100% - 48px);
       background: #fff;
       border-radius: 10px;
       box-shadow: 0 12px 40px rgba(2,6,23,0.6);
-      padding: 16px;
+      padding: 20px;
       position: relative;
     }
 
-    .modal-header {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-bottom: 12px;
-    }
-    .modal-title { font-size:20px; font-weight:600; }
-    .modal-close {
-      background:transparent;
-      border:2px solid #111;
-      width:36px;height:36px;border-radius:6px;
-      display:flex;align-items:center;justify-content:center;cursor:pointer;
-    }
+    .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+    .modal-close { background:transparent; border:none; font-size:20px; cursor:pointer; }
 
-    .check-grid {
-      display:grid;
-      grid-template-columns:repeat(2,1fr);
-      gap:8px;
-      margin-bottom:8px;
-    }
-    .check-text { font-size:14px; color:#111827; }
+    .check-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+    .day { width:100%; padding:8px; border:none; cursor:pointer; border-radius:6px; text-align:center; }
 
-    .calendar-widget { background:transparent; padding:0; box-shadow:none; }
-    .cal-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
-    .cal-title { font-weight:600; font-size:16px; }
-    .cal-controls button { background:#f3f4f6; border:1px solid #e6e9ef; padding:4px 8px; border-radius:6px; cursor:pointer; font-size:14px; }
-
-    .weekday-row { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:4px; text-align:center; font-size:12px; color:#6b7280; }
+    .calendar-widget { margin-bottom:12px; }
+    .cal-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+    .cal-top button { padding:4px 8px; border-radius:6px; border:1px solid #ccc; background:#f3f4f6; cursor:pointer; }
+    .weekday-row { display:grid; grid-template-columns:repeat(7,1fr); text-align:center; font-size:12px; color:#6b7280; margin-bottom:4px; }
     .days-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
-    .days-grid button { min-height:40px; padding:6px; border-radius:6px; background:transparent; cursor:pointer; border:none; }
 
-    .modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
-    .btn { padding:6px 12px; border-radius:6px; border:1px solid #0b5fff; background:#0b5fff;color:#fff; cursor:pointer; }
+    .modal-actions { display:flex; justify-content:flex-end; gap:8px; }
+    .btn { padding:6px 12px; border-radius:6px; border:none; background:#0b5fff; color:#fff; cursor:pointer; }
     .btn.ghost { background:transparent;color:#0b5fff;border:1px solid #dbeafe; }
 
-    @media (max-width:480px) { .modal{ width:95%; } }
+    @media (max-width:480px){ .modal{ width:90%; padding:14px; } }
   </style>
 </head>
 <body>
@@ -83,7 +64,7 @@
 
 <main class="content">
   <h2>Book Your Stay</h2>
-  <p>We’d love to welcome you to Seaside Escape! Please fill out the form below to send your booking inquiry.</p>
+  <p>We’d love to welcome you! Please fill out the form below to send your booking inquiry.</p>
 
   <form action="https://formspree.io/f/mexample" method="POST" id="bookingForm">
     <label for="name">Full Name</label>
@@ -93,7 +74,7 @@
     <input type="email" id="email" name="_replyto" required>
 
     <label for="dates">Preferred Dates</label>
-    <input type="text" id="dates" name="dates" placeholder="e.g. June 12–18, 2025" required readonly>
+    <input type="text" id="dates" name="dates" placeholder="Select dates" readonly>
     <input type="hidden" id="checkin" name="checkin">
     <input type="hidden" id="checkout" name="checkout">
 
@@ -112,8 +93,8 @@
 <div class="modal-overlay" id="dateModal">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title">Select Dates</div>
-      <button class="modal-close" id="closeModal">✕</button>
+      <div>Select Dates</div>
+      <button id="closeModal" class="modal-close">✕</button>
     </div>
 
     <div class="check-grid">
@@ -135,8 +116,8 @@
     </div>
 
     <div class="modal-actions">
-      <button class="btn ghost" id="cancelBtn">Cancel</button>
-      <button class="btn" id="applyBtn">Apply</button>
+      <button id="cancelBtn" class="btn ghost" type="button">Cancel</button>
+      <button id="applyBtn" class="btn" type="button">Apply</button>
     </div>
   </div>
 </div>
@@ -144,6 +125,8 @@
 <script>
 (function(){
   const datesInput = document.getElementById('dates');
+  const checkinHidden = document.getElementById('checkin');
+  const checkoutHidden = document.getElementById('checkout');
   const dateModal = document.getElementById('dateModal');
   const closeModalBtn = document.getElementById('closeModal');
   const cancelBtn = document.getElementById('cancelBtn');
@@ -152,19 +135,18 @@
   const checkoutText = document.getElementById('checkoutText');
   const monthTitle = document.getElementById('monthTitle');
   const daysGrid = document.getElementById('daysGrid');
-  const checkinHidden = document.getElementById('checkin');
-  const checkoutHidden = document.getElementById('checkout');
+  const prevMonthBtn = document.getElementById('prevMonth');
+  const nextMonthBtn = document.getElementById('nextMonth');
 
   let viewDate = new Date(); viewDate.setDate(1);
   let startDate = null, endDate = null;
-
   const today = new Date(); today.setHours(0,0,0,0);
 
-  function pad(n){ return n<10?'0'+n:n; }
-  function formatDate(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  function pad(n){return n<10?'0'+n:n;}
+  function formatDate(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
   function formatFriendly(d1,d2){
     if(!d1) return '';
-    const months=["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     if(!d2 || d1.getTime()===d2.getTime()) return months[d1.getMonth()]+' '+d1.getDate()+', '+d1.getFullYear();
     return months[d1.getMonth()]+' '+d1.getDate()+' – '+months[d2.getMonth()]+' '+d2.getDate();
   }
@@ -174,4 +156,54 @@
     dateModal.style.display='none';
     if(commit && startDate){
       datesInput.value = formatFriendly(startDate,endDate||startDate);
-      checkinHidden.value = startDate ? format
+      checkinHidden.value = formatDate(startDate);
+      checkoutHidden.value = endDate ? formatDate(endDate) : '';
+    }
+  }
+
+  function renderCalendar(){
+    monthTitle.textContent = viewDate.toLocaleString('default',{month:'long',year:'numeric'});
+    daysGrid.innerHTML='';
+    const year = viewDate.getFullYear(), month = viewDate.getMonth();
+    const firstDay = new Date(year,month,1);
+    const startWeek = firstDay.getDay();
+    const lastDate = new Date(year,month+1,0).getDate();
+    const prevLast = new Date(year,month,0).getDate();
+
+    for(let i=0;i<42;i++){
+      const btn = document.createElement('button'); btn.type='button'; btn.className='day';
+      let dayNum = i - startWeek + 1;
+      let cellDate;
+      if(dayNum <=0){ cellDate = new Date(year,month-1,prevLast+dayNum); btn.classList.add('other-month'); }
+      else if(dayNum>lastDate){ cellDate = new Date(year,month+1,dayNum-lastDate); btn.classList.add('other-month'); }
+      else{ cellDate = new Date(year,month,dayNum); }
+      btn.textContent = cellDate.getDate();
+      if(cellDate < today) btn.disabled = true;
+
+      if(startDate && endDate && cellDate>=startDate && cellDate<=endDate) btn.style.background='rgba(59,130,246,0.2)';
+      if(startDate && cellDate.getTime()===startDate.getTime() || endDate && cellDate.getTime()===endDate.getTime()) btn.style.background='rgba(37,99,235,0.4)';
+
+      btn.addEventListener('click',()=>{
+        if(!startDate || (startDate && endDate)){ startDate = new Date(cellDate); endDate=null; }
+        else if(!endDate){ endDate = new Date(cellDate); }
+        checkinText.textContent = startDate ? formatFriendly(startDate,null) : '—';
+        checkoutText.textContent = endDate ? formatFriendly(endDate,null) : '—';
+        renderCalendar();
+      });
+
+      daysGrid.appendChild(btn);
+    }
+  }
+
+  datesInput.addEventListener('click',openModal);
+  closeModalBtn.addEventListener('click',()=>closeModalFn(false));
+  cancelBtn.addEventListener('click',()=>closeModalFn(false));
+  applyBtn.addEventListener('click',()=>closeModalFn(true));
+  dateModal.addEventListener('click',(e)=>{ if(e.target===dateModal) closeModalFn(false); });
+  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeModalFn(false); });
+  prevMonthBtn.addEventListener('click',()=>{ viewDate.setMonth(viewDate.getMonth()-1); renderCalendar(); });
+  nextMonthBtn.addEventListener('click',()=>{ viewDate.setMonth(viewDate.getMonth()+1); renderCalendar(); });
+})();
+</script>
+</body>
+</html>
