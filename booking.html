@@ -6,89 +6,95 @@
   <title>Book Your Stay | Seaside Escape</title>
   <link rel="stylesheet" href="style.css">
 
-  <!-- Inline calendar styles (kept minimal to avoid clashing with your external CSS) -->
+  <!-- Modal & calendar styles (scoped to avoid global overrides) -->
   <style>
-    /* Calendar container */
-    .calendar-widget { max-width:880px; margin:12px 0 28px 0; background:#fff; border-radius:10px; padding:12px; box-shadow:0 6px 18px rgba(20,30,50,0.06); }
+    /* -- modal overlay -- */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(12, 14, 20, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 24px;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      width: 900px;
+      max-width: calc(100% - 48px);
+      max-height: calc(100% - 48px);
+      overflow: auto;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 12px 40px rgba(2,6,23,0.6);
+      padding: 20px;
+      position: relative;
+    }
+
+    .modal-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom: 12px;
+    }
+    .modal-title { font-size:22px; font-weight:600; }
+    .modal-close {
+      background:transparent;
+      border:2px solid #111;
+      width:44px;height:44px;border-radius:6px;
+      display:flex;align-items:center;justify-content:center;cursor:pointer;
+    }
+    .modal-content { display:grid; grid-template-columns: 1fr; gap:12px; }
+
+    /* checkin/checkout boxes */
+    .check-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:6px; }
+    .check-box {
+      border:1px solid #e6e9ef;
+      padding:14px;
+      border-radius:6px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-height:62px;
+    }
+    .icon { width:40px; height:40px; border-radius:6px; background:#f3f4f6; display:flex;align-items:center;justify-content:center; font-size:18px; color:#374151; }
+    .check-text { font-size:15px; color:#111827; }
+    .check-label { font-size:12px; color:#6b7280; margin-bottom:6px; }
+
+    /* calendar styles (compact) */
+    .calendar-widget { background:transparent; padding:0; box-shadow:none; }
     .cal-top { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px; }
-    .cal-title { font-weight:600; font-size:1rem; }
+    .cal-title { font-weight:600; font-size:16px; }
     .cal-controls { display:flex; gap:8px; align-items:center; }
     .cal-controls button { background:#f3f4f6; border:1px solid #e6e9ef; padding:6px 10px; border-radius:8px; cursor:pointer; }
     .weekday-row { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:6px; }
     .weekday { text-align:center; font-size:12px; color:#6b7280; padding:6px 0; }
     .days-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
-    .day { min-height:68px; padding:8px; border-radius:8px; background:transparent; display:flex; flex-direction:column; cursor:pointer; user-select:none; border: none; }
+    .day { min-height:60px; padding:8px; border-radius:8px; background:transparent; display:flex; flex-direction:column; cursor:pointer; user-select:none; border:none; text-align:left; }
     .day.other-month { opacity:0.34; }
-    .day .date-num { font-weight:600; font-size:14px; text-align:left; }
-    .day.today { box-shadow:inset 0 0 0 2px rgba(37,99,235,0.12); }
+    .date-num { font-weight:600; font-size:14px; color:#0f172a; }
+    .day.today { box-shadow: inset 0 0 0 2px rgba(37,99,235,0.12); }
     .day.range { background: rgba(59,130,246,0.10); }
-    .day.range.start { background: linear-gradient(90deg, rgba(59,130,246,0.12), rgba(59,130,246,0.06)); box-shadow: 0 2px 0 rgba(59,130,246,0.12) inset; }
-    .day.range.end { background: linear-gradient(90deg, rgba(59,130,246,0.06), rgba(59,130,246,0.12)); box-shadow: 0 2px 0 rgba(59,130,246,0.12) inset; }
+    .day.range.start { background: linear-gradient(90deg, rgba(59,130,246,0.12), rgba(59,130,246,0.06)); }
+    .day.range.end { background: linear-gradient(90deg, rgba(59,130,246,0.06), rgba(59,130,246,0.12)); }
     .day.selected { background: rgba(59,130,246,0.18); border-radius:10px; }
-    .small-note { font-size:13px; color:#374151; margin-bottom:8px; }
-    .cal-legend { display:flex; gap:10px; align-items:center; color:#6b7280; font-size:13px; margin-top:8px; }
-    .legend-dot { width:10px; height:10px; border-radius:50%; background:rgba(59,130,246,0.9); display:inline-block; margin-right:6px; }
+    .day:disabled { opacity:0.35; cursor:not-allowed; }
 
-    /* Preview text under the input */
-    .date-preview { font-size:13px; color:#374151; margin-top:6px; min-height:20px; }
-    .date-preview .muted { color:#6b7280; font-style:italic; }
+    /* footer of modal actions */
+    .modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
+    .btn { padding:8px 14px; border-radius:8px; border:1px solid #0b5fff; background:#0b5fff;color:#fff; cursor:pointer; }
+    .btn.ghost { background:transparent;color:#0b5fff;border:1px solid #dbeafe; }
 
-    /* Keep buttons accessible */
-    .day:focus { outline: 2px solid rgba(37,99,235,0.24); outline-offset: 2px; }
-
-    @media (max-width:680px){
-      .day { min-height:58px; padding:6px; }
-      .cal-top { gap:8px; flex-direction:column; align-items:flex-start; }
+    /* small responsive */
+    @media (max-width:720px) {
+      .check-grid { grid-template-columns:1fr; }
+      .modal { padding:14px; }
+      .modal-title { font-size:18px; }
     }
   </style>
-
-<style>
-  /* Ensure day buttons render consistently even if global CSS overrides buttons */
-  .calendar-widget button.day {
-    -webkit-appearance: none;
-    appearance: none;
-    background: transparent !important;
-    border: none !important;
-    color: inherit !important;
-    padding: 8px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    box-shadow: none !important;
-    opacity: 1 !important;
-  }
-
-  /* Force the date number to be visible */
-  .calendar-widget .date-num {
-    color: #0f172a !important;        /* dark text for numbers */
-    font-weight: 600 !important;
-    font-size: 14px !important;
-    line-height: 1 !important;
-    opacity: 1 !important;
-  }
-
-  /* Make range/background visible even if page CSS tries to hide backgrounds */
-  .calendar-widget .day.range,
-  .calendar-widget .day.selected,
-  .calendar-widget .day.today {
-    background-clip: padding-box !important;
-    background-color: rgba(59,130,246,0.08) !important;
-  }
-
-  /* Ensure the grid area isn't collapsed or hidden by other rules */
-  .calendar-widget .days-grid {
-    min-height: 300px; /* keeps layout stable if other CSS collapses it */
-  }
-
-  /* Visible weekday text */
-  .calendar-widget .weekday,
-  .calendar-widget .cal-title,
-  .calendar-widget .small-note,
-  .calendar-widget .date-preview {
-    color: #0f172a !important;
-  }
-</style>
-
 </head>
 <body>
   <header>
@@ -115,42 +121,12 @@
       <input type="email" id="email" name="_replyto" required>
 
       <label for="dates">Preferred Dates</label>
-      <!-- readonly input; user uses calendar below to pick -->
+      <!-- visible friendly field (opens modal) -->
       <input type="text" id="dates" name="dates" placeholder="e.g. June 12–18, 2025" required readonly>
 
-      <!-- Live preview shown under the input; updates on hover and selection -->
-      <div class="date-preview" id="datePreview"><span class="muted">Hover over dates in the calendar to preview — click to select.</span></div>
-
-      <!-- Calendar widget placed directly under the Preferred Dates field -->
-      <div class="calendar-widget" id="calendarWidget" aria-label="Booking calendar">
-        <div class="cal-top">
-          <div>
-            <div class="cal-title" id="monthTitle">Month Year</div>
-            <div class="small-note">Click a start date then an end date to select a range. Click again to reset selection.</div>
-          </div>
-          <div class="cal-controls" role="toolbar" aria-label="Calendar controls">
-            <button id="prevMonth" aria-label="Previous month">◀</button>
-            <button id="todayBtn" aria-label="Go to current month">Today</button>
-            <button id="nextMonth" aria-label="Next month">▶</button>
-          </div>
-        </div>
-
-        <div class="weekday-row" aria-hidden="true">
-          <div class="weekday">Sun</div>
-          <div class="weekday">Mon</div>
-          <div class="weekday">Tue</div>
-          <div class="weekday">Wed</div>
-          <div class="weekday">Thu</div>
-          <div class="weekday">Fri</div>
-          <div class="weekday">Sat</div>
-        </div>
-
-        <div class="days-grid" id="daysGrid" role="grid"></div>
-
-        <div class="cal-legend" aria-hidden="true">
-          <span><span class="legend-dot" aria-hidden="true"></span> Selected range</span>
-        </div>
-      </div>
+      <!-- Hidden fields for backend -->
+      <input type="hidden" id="checkin" name="checkin">
+      <input type="hidden" id="checkout" name="checkout">
 
       <label for="message">Message</label>
       <textarea id="message" name="message" rows="5" required></textarea>
@@ -163,227 +139,290 @@
     <p>&copy; 2025 Seaside Escape | Email: info@seasideescape.com</p>
   </footer>
 
-  <!-- Calendar behavior script -->
+  <!-- Modal markup -->
+  <div class="modal-overlay" id="dateModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal" role="document">
+      <div class="modal-header">
+        <div>
+          <div id="modalTitle" class="modal-title">Select Dates and Guests</div>
+          <div style="color:#6b7280;font-size:13px;margin-top:4px">Choose your check-in and checkout dates</div>
+        </div>
+        <button class="modal-close" id="closeModal" aria-label="Close date picker">✕</button>
+      </div>
+
+      <div class="modal-content">
+        <!-- checkin / checkout summary -->
+        <div class="check-grid" id="checkSummary">
+          <div>
+            <div class="check-label">Check-In date</div>
+            <div class="check-box" id="checkinBox">
+              <div class="icon">📅</div>
+              <div>
+                <div class="check-text" id="checkinText">—</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="check-label">Checkout date</div>
+            <div class="check-box" id="checkoutBox">
+              <div class="icon">📅</div>
+              <div>
+                <div class="check-text" id="checkoutText">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- calendar -->
+        <div class="calendar-widget" id="modalCalendar">
+          <div class="cal-top">
+            <div class="cal-title" id="modalMonthTitle">Month Year</div>
+            <div class="cal-controls" role="toolbar">
+              <button id="modalPrev" aria-label="Previous month">◀</button>
+              <button id="modalToday" aria-label="Current month">Today</button>
+              <button id="modalNext" aria-label="Next month">▶</button>
+            </div>
+          </div>
+
+          <div class="weekday-row" aria-hidden="true">
+            <div class="weekday">Sun</div>
+            <div class="weekday">Mon</div>
+            <div class="weekday">Tue</div>
+            <div class="weekday">Wed</div>
+            <div class="weekday">Thu</div>
+            <div class="weekday">Fri</div>
+            <div class="weekday">Sat</div>
+          </div>
+
+          <div class="days-grid" id="modalDaysGrid" role="grid" aria-label="Calendar days"></div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn ghost" id="cancelBtn" type="button">Cancel</button>
+          <button class="btn" id="applyBtn" type="button">Apply dates</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script: modal + calendar logic -->
   <script>
-    (function () {
-      const daysGrid = document.getElementById('daysGrid');
-      const monthTitle = document.getElementById('monthTitle');
-      const prevMonthBtn = document.getElementById('prevMonth');
-      const nextMonthBtn = document.getElementById('nextMonth');
-      const todayBtn = document.getElementById('todayBtn');
-      const datesInput = document.getElementById('dates');
-      const datePreview = document.getElementById('datePreview');
+  (function () {
+    /* Element refs */
+    const datesInput = document.getElementById('dates');
+    const dateModal = document.getElementById('dateModal');
+    const closeModal = document.getElementById('closeModal');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const applyBtn = document.getElementById('applyBtn');
 
-      // View date = currently displayed month (first day)
-      let viewDate = new Date();
-      viewDate.setDate(1);
+    const modalMonthTitle = document.getElementById('modalMonthTitle');
+    const modalDaysGrid = document.getElementById('modalDaysGrid');
+    const modalPrev = document.getElementById('modalPrev');
+    const modalNext = document.getElementById('modalNext');
+    const modalToday = document.getElementById('modalToday');
 
-      // Selection state
-      let startDate = null;
-      let endDate = null;
+    const checkinText = document.getElementById('checkinText');
+    const checkoutText = document.getElementById('checkoutText');
+    const checkinHidden = document.getElementById('checkin');
+    const checkoutHidden = document.getElementById('checkout');
 
-      // Hover preview state
-      let hoveredDate = null;
+    /* state */
+    let viewDate = new Date(); viewDate.setDate(1);
+    let startDate = null;
+    let endDate = null;
 
-      // Utility helpers
-      function pad(n) { return n < 10 ? '0' + n : '' + n; }
-      function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
-      function isSameDay(a, b) { return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+    // normalize today
+    const todayBase = new Date(); todayBase.setHours(0,0,0,0);
 
-      function formatFriendlyRange(a, b) {
-        if (!a) return '';
-        const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    /* Helpers */
+    function pad(n){return n<10? '0'+n:''+n;}
+    function isSameDay(a,b){ return a && b && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+    function formatFriendly(a,b){
+      if(!a) return '';
+      const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+      if(!b || isSameDay(a,b)) return months[a.getMonth()] + ' ' + a.getDate() + ', ' + a.getFullYear();
+      let s=a,e=b; if(s>e) [s,e]=[e,s];
+      if(s.getFullYear()===e.getFullYear()){
+        if(s.getMonth()===e.getMonth()) return months[s.getMonth()] + ' ' + s.getDate() + '–' + e.getDate() + ', ' + s.getFullYear();
+        return months[s.getMonth()] + ' ' + s.getDate() + ' – ' + months[e.getMonth()] + ' ' + e.getDate() + ', ' + s.getFullYear();
+      }
+      return months[s.getMonth()] + ' ' + s.getDate() + ', ' + s.getFullYear() + ' – ' + months[e.getMonth()] + ' ' + e.getDate() + ', ' + e.getFullYear();
+    }
 
-        if (!b || isSameDay(a, b)) {
-          return months[a.getMonth()] + ' ' + a.getDate() + ', ' + a.getFullYear();
+    /* open/close modal */
+    function openModal() {
+      dateModal.classList.add('open');
+      dateModal.setAttribute('aria-hidden','false');
+      // prevent background scroll
+      document.documentElement.style.overflow = 'hidden';
+      // focus first interactive element
+      closeModal.focus();
+      renderModal();
+    }
+    function closeModalFn(commit=false){
+      dateModal.classList.remove('open');
+      dateModal.setAttribute('aria-hidden','true');
+      document.documentElement.style.overflow = '';
+      // if commit, apply to visible input and hidden fields
+      if(commit && startDate){
+        datesInput.value = formatFriendly(startDate, endDate || startDate);
+        checkinHidden.value = startDate ? (startDate.getFullYear() + '-' + pad(startDate.getMonth()+1) + '-' + pad(startDate.getDate())) : '';
+        checkoutHidden.value = endDate ? (endDate.getFullYear() + '-' + pad(endDate.getMonth()+1) + '-' + pad(endDate.getDate())) : '';
+      }
+      // return focus to input
+      datesInput.focus();
+    }
+
+    /* click handlers to open modal */
+    datesInput.addEventListener('click', openModal);
+    datesInput.addEventListener('focus', openModal);
+
+    // close handlers
+    closeModal.addEventListener('click', () => closeModalFn(false));
+    cancelBtn.addEventListener('click', () => closeModalFn(false));
+    applyBtn.addEventListener('click', () => closeModalFn(true));
+
+    // close on overlay click (but not when clicking modal content)
+    dateModal.addEventListener('click', (ev) => {
+      if (ev.target === dateModal) closeModalFn(false);
+    });
+
+    // ESC to close
+    document.addEventListener('keydown', (ev) => {
+      if(ev.key === 'Escape' && dateModal.classList.contains('open')) {
+        closeModalFn(false);
+      }
+    });
+
+    /* Calendar rendering inside modal (6 weeks / 42 cells) */
+    function renderModal() {
+      modalDaysGrid.innerHTML = '';
+      const year = viewDate.getFullYear();
+      const month = viewDate.getMonth();
+      const first = new Date(year, month, 1);
+      const startWeekday = first.getDay();
+      const lastOfMonth = new Date(year, month+1, 0).getDate();
+      const prevMonthLast = new Date(year, month, 0).getDate();
+
+      modalMonthTitle.textContent = viewDate.toLocaleString(undefined, { month:'long', year:'numeric' });
+
+      const total = 42;
+      for(let i=0;i<total;i++){
+        const btn = document.createElement('button');
+        btn.className = 'day';
+        btn.type = 'button';
+        btn.setAttribute('role','gridcell');
+
+        const dayIndex = i - startWeekday + 1;
+        let cellDate;
+        if(dayIndex <= 0){
+          cellDate = new Date(year, month-1, prevMonthLast + dayIndex);
+          btn.classList.add('other-month');
+        } else if(dayIndex > lastOfMonth){
+          cellDate = new Date(year, month+1, dayIndex - lastOfMonth);
+          btn.classList.add('other-month');
+        } else {
+          cellDate = new Date(year, month, dayIndex);
         }
 
-        // ensure a <= b
-        let s = a, e = b;
-        if (s > e) [s, e] = [e, s];
+        const dn = document.createElement('div');
+        dn.className = 'date-num';
+        dn.textContent = cellDate.getDate();
+        btn.appendChild(dn);
 
-        if (s.getFullYear() === e.getFullYear()) {
-          if (s.getMonth() === e.getMonth()) {
-            // Same month & year: "June 12–18, 2025"
-            return months[s.getMonth()] + ' ' + s.getDate() + '–' + e.getDate() + ', ' + s.getFullYear();
-          } else {
-            // Same year, different month: "June 28 – July 3, 2025"
-            return months[s.getMonth()] + ' ' + s.getDate() + ' – ' + months[e.getMonth()] + ' ' + e.getDate() + ', ' + s.getFullYear();
+        // disable past dates
+        const cellNorm = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
+        if(cellNorm < todayBase){
+          btn.disabled = true;
+        }
+
+        // mark today
+        if(isSameDay(cellDate, todayBase)){
+          btn.classList.add('today');
+          btn.setAttribute('aria-current','date');
+        }
+
+        // selection highlighting
+        if(startDate && endDate){
+          let s=startDate,e=endDate; if(s>e)[s,e]=[e,s];
+          if(cellDate >= s && cellDate <= e){
+            btn.classList.add('range');
+            if(isSameDay(cellDate,s)) btn.classList.add('start');
+            if(isSameDay(cellDate,e)) btn.classList.add('end');
           }
-        } else {
-          // Different years: "Dec 30, 2025 – Jan 3, 2026"
-          return months[s.getMonth()] + ' ' + s.getDate() + ', ' + s.getFullYear() + ' – ' + months[e.getMonth()] + ' ' + e.getDate() + ', ' + e.getFullYear();
+          if(isSameDay(cellDate, startDate) || isSameDay(cellDate, endDate)){
+            btn.classList.add('selected');
+          }
+        } else if(startDate && isSameDay(cellDate,startDate)){
+          btn.classList.add('selected');
         }
+
+        // hover: update top summary preview when not disabled
+        btn.addEventListener('mouseenter', () => {
+          if(btn.disabled) return;
+          if(startDate && !endDate){
+            checkinText.textContent = formatFriendly(startDate, null);
+            checkoutText.textContent = formatFriendly(startDate, cellDate);
+          } else if(!startDate){
+            checkinText.textContent = formatFriendly(cellDate,null);
+            checkoutText.textContent = '—';
+          } else {
+            // both set: preview
+            checkinText.textContent = formatFriendly(startDate,null);
+            checkoutText.textContent = endDate ? formatFriendly(endDate,null) : '—';
+          }
+        });
+
+        btn.addEventListener('mouseleave', () => {
+          // restore actual values
+          checkinText.textContent = startDate ? formatFriendly(startDate,null) : '—';
+          checkoutText.textContent = endDate ? formatFriendly(endDate,null) : '—';
+        });
+
+        // click: set start/end (skip disabled)
+        btn.addEventListener('click', () => {
+          if(btn.disabled) return;
+          if(!startDate || (startDate && endDate)){
+            startDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
+            endDate = null;
+          } else if(!endDate){
+            endDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
+            // allow same-day booking
+          }
+          // update visible summary immediately
+          checkinText.textContent = startDate ? formatFriendly(startDate,null) : '—';
+          checkoutText.textContent = endDate ? formatFriendly(endDate,null) : '—';
+          // If you want to auto-close when both chosen, uncomment:
+          // if(startDate && endDate) closeModalFn(true);
+          renderModal();
+        });
+
+        // keyboard activation
+        btn.addEventListener('keydown', (ev) => {
+          if(ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); btn.click(); }
+        });
+
+        modalDaysGrid.appendChild(btn);
       }
-
-// Render calendar month view (6 weeks / 42 cells)
-function render() {
-  daysGrid.innerHTML = '';
-  const year = viewDate.getFullYear();
-  const month = viewDate.getMonth();
-  const firstDayOfMonth = new Date(year, month, 1);
-  const startWeekday = firstDayOfMonth.getDay(); // 0=Sun
-  const lastOfMonth = new Date(year, month + 1, 0).getDate();
-  const prevMonthLastDay = new Date(year, month, 0).getDate();
-
-  monthTitle.textContent = viewDate.toLocaleString(undefined, { month: 'long', year: 'numeric' });
-
-  // normalise today's date for comparisons (midnight)
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const totalCells = 42;
-  for (let i = 0; i < totalCells; i++) {
-    const cell = document.createElement('button');
-    cell.className = 'day';
-    cell.type = 'button';
-    cell.setAttribute('role', 'gridcell');
-    cell.setAttribute('aria-pressed', 'false');
-
-    // calculate date to show
-    const dayIndex = i - startWeekday + 1;
-    let cellDate;
-    if (dayIndex <= 0) {
-      // prev month
-      cellDate = new Date(year, month - 1, prevMonthLastDay + dayIndex);
-      cell.classList.add('other-month');
-    } else if (dayIndex > lastOfMonth) {
-      // next month
-      cellDate = new Date(year, month + 1, dayIndex - lastOfMonth);
-      cell.classList.add('other-month');
-    } else {
-      // this month
-      cellDate = new Date(year, month, dayIndex);
     }
 
-    // date number
-    const dateNum = document.createElement('div');
-    dateNum.className = 'date-num';
-    dateNum.textContent = cellDate.getDate();
-    cell.appendChild(dateNum);
+    // controls
+    modalPrev.addEventListener('click', () => { viewDate.setMonth(viewDate.getMonth() - 1); renderModal(); });
+    modalNext.addEventListener('click', () => { viewDate.setMonth(viewDate.getMonth() + 1); renderModal(); });
+    modalToday.addEventListener('click', () => { viewDate = new Date(); viewDate.setDate(1); renderModal(); });
 
-    // mark today
-    if (isSameDay(cellDate, today)) {
-      cell.classList.add('today');
-      cell.setAttribute('aria-current', 'date');
+    // initialise summary defaults
+    function updateSummaryTexts(){
+      checkinText.textContent = startDate ? formatFriendly(startDate,null) : '—';
+      checkoutText.textContent = endDate ? formatFriendly(endDate,null) : '—';
     }
+    updateSummaryTexts();
 
-    // ✅ Disable past dates (strictly before today)
-    const cellDateNormalized = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
-    if (cellDateNormalized < today) {
-      cell.disabled = true;
-      cell.style.opacity = '0.35';
-      cell.style.cursor = 'not-allowed';
-    }
+    // Expose a way to clear via double-click on input (optional)
+    datesInput.addEventListener('dblclick', () => { startDate = endDate = null; datesInput.value = ''; checkinHidden.value=''; checkoutHidden.value=''; updateSummaryTexts(); });
 
-    // selection highlighting
-    if (startDate && endDate) {
-      let s = startDate, e = endDate;
-      if (s > e) [s, e] = [e, s];
-      if (cellDate >= s && cellDate <= e) {
-        cell.classList.add('range');
-        if (isSameDay(cellDate, s)) cell.classList.add('start');
-        if (isSameDay(cellDate, e)) cell.classList.add('end');
-      }
-      if (isSameDay(cellDate, startDate) || isSameDay(cellDate, endDate)) {
-        cell.classList.add('selected');
-        cell.setAttribute('aria-pressed', 'true');
-      }
-    } else if (startDate && isSameDay(cellDate, startDate)) {
-      cell.classList.add('selected');
-      cell.setAttribute('aria-pressed', 'true');
-    }
-
-    // hover preview (skip past dates)
-    cell.addEventListener('mouseenter', () => {
-      if (cell.disabled) return;
-      hoveredDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
-      if (startDate && !endDate) {
-        datePreview.textContent = formatFriendlyRange(startDate, hoveredDate);
-      } else if (!startDate) {
-        datePreview.textContent = formatFriendlyRange(hoveredDate, null);
-      } else if (startDate && endDate) {
-        datePreview.textContent = formatFriendlyRange(startDate, hoveredDate);
-      }
-    });
-    cell.addEventListener('mouseleave', () => {
-      if (cell.disabled) return;
-      hoveredDate = null;
-      if (startDate) {
-        datePreview.textContent = formatFriendlyRange(startDate, endDate || startDate);
-      } else {
-        datePreview.innerHTML = '<span class="muted">Hover over dates in the calendar to preview — click to select.</span>';
-      }
-    });
-
-    // click handler
-    cell.addEventListener('click', () => {
-      if (cell.disabled) return;
-      if (!startDate || (startDate && endDate)) {
-        startDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
-        endDate = null;
-      } else if (!endDate) {
-        endDate = new Date(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
-      }
-      datesInput.value = formatFriendlyRange(startDate, endDate || startDate);
-      datePreview.textContent = datesInput.value || '<span class="muted">Hover over dates in the calendar to preview — click to select.</span>';
-      render();
-    });
-
-    // keyboard accessibility: Enter/Space to click (disabled buttons won't fire click)
-    cell.addEventListener('keydown', (ev) => {
-      if (ev.key === 'Enter' || ev.key === ' ') {
-        ev.preventDefault();
-        if (!cell.disabled) cell.click();
-      }
-    });
-
-    daysGrid.appendChild(cell);
-  }
-}
-
-
-      // controls
-      prevMonthBtn.addEventListener('click', () => {
-        viewDate.setMonth(viewDate.getMonth() - 1);
-        render();
-      });
-      nextMonthBtn.addEventListener('click', () => {
-        viewDate.setMonth(viewDate.getMonth() + 1);
-        render();
-      });
-      todayBtn.addEventListener('click', () => {
-        viewDate = new Date();
-        viewDate.setDate(1);
-        render();
-      });
-
-      // clicking the dates input focuses calendar to current month and scrolls into view
-      datesInput.addEventListener('focus', () => {
-        if (startDate) {
-          viewDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-        } else {
-          viewDate = new Date();
-          viewDate.setDate(1);
-        }
-        render();
-        document.getElementById('calendarWidget').scrollIntoView({ behavior: 'smooth', block: 'center' });
-      });
-
-      // Allow clearing selection by double-click on input
-      datesInput.addEventListener('dblclick', () => {
-        startDate = endDate = null;
-        datesInput.value = '';
-        datePreview.innerHTML = '<span class="muted">Hover over dates in the calendar to preview — click to select.</span>';
-        render();
-      });
-
-      // initial preview hint
-      datePreview.innerHTML = '<span class="muted">Hover over dates in the calendar to preview — click to select.</span>';
-
-      // initial render
-      render();
-    })();
+    // If you want to prefill modal from existing input, parse on open (not implemented here)
+  })();
   </script>
 </body>
 </html>
