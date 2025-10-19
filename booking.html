@@ -7,19 +7,23 @@
   <meta name="description" content="Send a booking enquiry for Sa Dommo e Mare — steps from the beach in Sardinia." />
   <link rel="preconnect" href="https://images.unsplash.com">
   <style>
-    :root{
-      --bg:#0b1220;
-      --bg-soft:#0f1730;
-      --card:#121a35;
-      --text:#eaf0ff;
-      --muted:#a8b3cf;
-      --brand:#58a6ff;
-      --brand-2:#22d3ee;
-      --ring: 0 8px 40px rgba(88,166,255,.15);
-      --radius: 16px;
-      --border: 1px solid rgba(255,255,255,.08);
-    }
+:root{
+  /* --- core colours --- */
+  --bg:#071b24;            /* deep navy-teal background */
+  --bg-soft:#0b2430;        /* slightly lighter tone */
+  --card:#103549;           /* panels / cards */
+  --text:#e8fbff;           /* bright seafoam white */
+  --muted:#98c2c8;          /* pale turquoise-muted text */
 
+  /* --- accents --- */
+  --brand:#4ad2c5;          /* primary turquoise */
+  --brand-2:#5de0d0;        /* gradient highlight */
+  --ring:0 8px 40px rgba(77,208,195,.25);
+
+  /* --- shape and borders --- */
+  --radius:16px;
+  --border:1px solid rgba(255,255,255,.08);
+}
     /* Base */
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:linear-gradient(180deg,var(--bg) 0%, #0b1220 50%, #0a1020 100%);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;scroll-behavior:smooth}
