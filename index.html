@@ -7,17 +7,23 @@
   <meta name="description" content="Relax, unwind, and enjoy a traditional experience at Sa Dommo e Mare — steps from the beach." />
   <link rel="preconnect" href="https://images.unsplash.com">
   <style>
-    :root{
-      --bg:#0b1220;
-      --bg-soft:#0f1730;
-      --card:#121a35;
-      --text:#eaf0ff;
-      --muted:#a8b3cf;
-      --brand:#58a6ff;
-      --brand-2:#22d3ee;
-      --ring: 0 8px 40px rgba(88,166,255,.15);
-      --radius: 16px;
-    }
+  :root{
+  /* --- core colours --- */
+  --bg:#071b24;            /* deep navy-teal background */
+  --bg-soft:#0b2430;        /* slightly lighter tone */
+  --card:#103549;           /* panels / cards */
+  --text:#e8fbff;           /* bright seafoam white */
+  --muted:#98c2c8;          /* pale turquoise-muted text */
+
+  /* --- accents --- */
+  --brand:#4ad2c5;          /* primary turquoise */
+  --brand-2:#5de0d0;        /* gradient highlight */
+  --ring:0 8px 40px rgba(77,208,195,.25);
+
+  /* --- shape and borders --- */
+  --radius:16px;
+  --border:1px solid rgba(255,255,255,.08);
+}
     /* Reset / base */
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:linear-gradient(180deg,var(--bg) 0%, #0b1220 50%, #0a1020 100%);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;scroll-behavior:smooth}
@@ -61,7 +67,7 @@
     }
     .hero::before{
       content:"";position:absolute;inset:-20%;z-index:-2;
-      background:url('images/sardinia-2.jpg') center/cover no-repeat; /* ← your file */
+      background:url('images/sardinia-4.jpg') center/cover no-repeat; /* ← your file */
       filter:saturate(1.2) brightness(.85);
       transform:scale(1.05);
     }
@@ -221,7 +227,7 @@
       <!-- Replace src with your own images -->
   <div class="g-item fade-up"><img loading="lazy" src="images/sardinia.jpg" alt="Alt placeholder text"></div>
   <div class="g-item fade-up"><img loading="lazy" src="images/sardinia-3.jpg" alt="Alt placeholder text"></div>
-  <div class="g-item fade-up"><img loading="lazy" src="images/sardinia-4.jpg" alt="Alt placeholder text"></div>
+  <div class="g-item fade-up"><img loading="lazy" src="images/sardinia-2.jpg" alt="Alt placeholder text"></div>
   <div class="g-item fade-up"><img loading="lazy" src="images/sardinia-5.jpg" alt="Alt placeholder text"></div>
   <div class="g-item fade-up"><img loading="lazy" src="images/sardinia-6.jpg" alt="Alt placeholder text"></div>
     </div>
